@@ -1,7 +1,7 @@
 import { ApolloWrapper } from '../components/ApolloWrapper';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import './globals.css';
+import './styles/global.css';
 
 export default function RootLayout({
   children,
