@@ -1,9 +1,10 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { gql, useMutation, useLazyQuery } from '@apollo/client';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { gql, useMutation, useLazyQuery } from "@apollo/client";
+import { useAuth } from "../../contexts/AuthContext";
 
 const LOGIN_MUTATION = gql`
   mutation Login($email: String!, $password: String!) {
@@ -42,18 +43,25 @@ const AUTHENTICATE_WITH_GOOGLE = gql`
 `;
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const router = useRouter();
+  const { user, loading: authLoading, login: authLogin } = useAuth();
 
   const [login] = useMutation(LOGIN_MUTATION);
   const [getGoogleAuthUrl] = useLazyQuery(GET_GOOGLE_AUTH_URL);
   const [authenticateWithGoogle] = useMutation(AUTHENTICATE_WITH_GOOGLE);
 
   useEffect(() => {
+    if (!authLoading && user) {
+      redirectBasedOnRole(user.role);
+    }
+  }, [authLoading, user]);
+
+  useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
+    const code = urlParams.get("code");
     if (code) {
       handleGoogleAuthentication(code);
     }
@@ -61,18 +69,19 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     if (!email || !password) {
-      setError('Please enter both email and password.');
+      setError("Please enter both email and password.");
       return;
     }
 
     try {
       const { data } = await login({ variables: { email, password } });
+      await authLogin(data.login.token);
       handleAuthenticationSuccess(data.login);
     } catch (err: any) {
-      setError(err.message || 'An error occurred. Please try again.');
+      setError(err.message || "An error occurred. Please try again.");
       console.error(err);
     }
   };
@@ -82,7 +91,7 @@ export default function LoginPage() {
       const { data } = await getGoogleAuthUrl();
       window.location.href = data.getGoogleAuthUrl.url;
     } catch (err: any) {
-      setError('Failed to initiate Google Sign-In. Please try again.');
+      setError("Failed to initiate Google Sign-In. Please try again.");
       console.error(err);
     }
   };
@@ -92,10 +101,11 @@ export default function LoginPage() {
     try {
       const { data } = await authenticateWithGoogle({ variables: { code } });
       console.log("Google authentication response:", data);
+      await authLogin(data.authenticateWithGoogle.token);
       handleAuthenticationSuccess(data.authenticateWithGoogle);
     } catch (err: any) {
       console.error("Google authentication error:", err);
-      let errorMessage = 'Google authentication failed. Please try again.';
+      let errorMessage = "Google authentication failed. Please try again.";
       if (err.graphQLErrors && err.graphQLErrors.length > 0) {
         errorMessage = err.graphQLErrors[0].message;
       }
@@ -103,29 +113,50 @@ export default function LoginPage() {
     }
   };
 
-  const handleAuthenticationSuccess = (authData: { token: string; user: { role: string } }) => {
-    localStorage.setItem('token', authData.token);
-    
-    switch (authData.user.role) {
-      case 'SUPER_ADMIN':
-      case 'ADMIN':
-      case 'EDITOR':
-        router.push('/management');
+  const handleAuthenticationSuccess = (authData: {
+    token: string;
+    user: { role: string };
+  }) => {
+    redirectBasedOnRole(authData.user.role);
+  };
+
+  const redirectBasedOnRole = (role: string) => {
+    switch (role) {
+      case "SUPER_ADMIN":
+      case "ADMIN":
+      case "EDITOR":
+        router.push("/management");
         break;
-      case 'USER':
-        router.push('/quiz');
+      case "USER":
+        router.push("/quiz");
         break;
       default:
-        setError('Invalid user role');
+        setError("Invalid user role");
     }
   };
 
+  if (authLoading) {
+    return <p>Loading...</p>;
+  }
+
+  if (user) {
+    return null; // The useEffect hook will handle the redirection
+  }
+
   return (
     <div className="max-w-md mx-auto mt-10">
-      <h1 className="text-3xl font-bold mb-6 text-center">Login to Drone Pilot Quiz</h1>
-      <form onSubmit={handleSubmit} className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+      <h1 className="text-3xl font-bold mb-6 text-center">
+        Login to Drone Pilot Quiz
+      </h1>
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
+      >
         <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
+          <label
+            className="block text-gray-700 text-sm font-bold mb-2"
+            htmlFor="email"
+          >
             Email
           </label>
           <input
@@ -138,7 +169,10 @@ export default function LoginPage() {
           />
         </div>
         <div className="mb-6">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
+          <label
+            className="block text-gray-700 text-sm font-bold mb-2"
+            htmlFor="password"
+          >
             Password
           </label>
           <input
@@ -176,7 +210,7 @@ export default function LoginPage() {
         </div>
       </form>
       <p className="text-center text-gray-500 text-xs">
-        Don't have an account?{' '}
+        Don't have an account?{" "}
         <Link href="/register" className="text-blue-500 hover:text-blue-800">
           Register here
         </Link>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { gql, useQuery, useMutation, useApolloClient } from "@apollo/client";
+import { useAuth } from "../../contexts/AuthContext";
 
 const GET_CURRENT_USER = gql`
   query GetCurrentUser {
@@ -98,29 +99,17 @@ const DELETE_USER = gql`
 
 export default function ManagementPage() {
   const router = useRouter();
-  const apolloClient = useApolloClient();
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const { user, loading: authLoading, logout } = useAuth();
   const [editingQuestion, setEditingQuestion] = useState<any>(null);
   const [isUserSectionCollapsed, setIsUserSectionCollapsed] = useState(false);
   const [isQuestionSectionCollapsed, setIsQuestionSectionCollapsed] =
     useState(false);
 
-  const {
-    loading: currentUserLoading,
-    error: currentUserError,
-    data: currentUserData,
-  } = useQuery(GET_CURRENT_USER, {
-    fetchPolicy: "network-only",
-    onCompleted: (data) => {
-      if (data && data.me) {
-        setCurrentUser(data.me);
-      }
-    },
-    onError: (error) => {
-      console.error("Error fetching current user:", error);
+  useEffect(() => {
+    if (!authLoading && !user) {
       router.push("/login");
-    },
-  });
+    }
+  }, [authLoading, user, router]);
 
   const {
     loading: usersLoading,
@@ -128,7 +117,7 @@ export default function ManagementPage() {
     data: usersData,
     refetch: refetchUsers,
   } = useQuery(GET_ALL_USERS, {
-    skip: !currentUser || !["SUPER_ADMIN", "ADMIN"].includes(currentUser.role),
+    skip: !user || !["SUPER_ADMIN", "ADMIN"].includes(user?.role || ""),
     fetchPolicy: "network-only",
   });
 
@@ -148,20 +137,8 @@ export default function ManagementPage() {
   const [deleteUser] = useMutation(DELETE_USER);
 
   const handleLogout = async () => {
-    try {
-      // First, clear all active queries and mutations
-      await apolloClient.clearStore();
-
-      // Then remove the token
-      localStorage.removeItem("token");
-
-      // Navigate to login page
-      router.push("/login");
-    } catch (error) {
-      console.error("Logout Error:", error);
-      // Even if there's an error, we still want to redirect to the login page
-      router.push("/login");
-    }
+    logout();
+    router.push("/login");
   };
 
   const handleCreateQuestion = async (
@@ -278,21 +255,19 @@ export default function ManagementPage() {
     }
   };
 
-  if (currentUserLoading) return <p>Loading...</p>;
-  if (currentUserError) return <p>Error: {currentUserError.message}</p>;
-  if (!currentUser)
-    return <p>No user data available. Please try logging in again.</p>;
+  if (authLoading) return <p>Loading...</p>;
+  if (!user) return null; // The useEffect hook will handle the redirection
 
-  const canManageUsers = ["SUPER_ADMIN", "ADMIN"].includes(currentUser.role);
+  const canManageUsers = ["SUPER_ADMIN", "ADMIN"].includes(user.role);
   const canManageQuestions = ["SUPER_ADMIN", "ADMIN", "EDITOR"].includes(
-    currentUser.role
+    user.role
   );
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Management Dashboard</h1>
       <p className="mb-4">
-        Welcome, {currentUser.username} ({currentUser.role})
+        Welcome, {user.username} ({user.role})
       </p>
 
       <button
