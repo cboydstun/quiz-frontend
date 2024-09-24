@@ -59,6 +59,9 @@ export default function Navbar() {
           <Link href="/quiz" className="text-white hover:text-gray-300">
             Start Quiz
           </Link>
+          <Link href="/flash-cards" className="text-white hover:text-gray-300">
+            Flash Cards
+          </Link>
           <Link
             href="/study-materials"
             className="text-white hover:text-gray-300"
@@ -105,10 +108,16 @@ export default function Navbar() {
             Home
           </Link>
           <Link
-            href="/quizzes"
+            href="/quiz"
             className="block text-white py-2 px-4 hover:bg-gray-700"
           >
-            Quizzes
+            Start Quiz
+          </Link>
+          <Link
+            href="/flash-cards"
+            className="block text-white py-2 px-4 hover:bg-gray-700"
+          >
+            Flash Cards
           </Link>
           <button
             onClick={handleAuthClick}

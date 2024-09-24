@@ -84,7 +84,7 @@ export default function QuizPage() {
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (difficulty === "MEDIUM" || difficulty === "HARD") {
-      const time = difficulty === "MEDIUM" ? 120 : 30;
+      const time = difficulty === "MEDIUM" ? 60 : 30;
       setTimeRemaining(time);
       timer = setInterval(() => {
         setTimeRemaining((prevTime) => {
@@ -111,7 +111,7 @@ export default function QuizPage() {
     setDifficulty(selectedDifficulty);
     setTimeRemaining(
       selectedDifficulty === "MEDIUM"
-        ? 120
+        ? 60
         : selectedDifficulty === "HARD"
         ? 30
         : null
@@ -120,32 +120,6 @@ export default function QuizPage() {
 
   const handleAnswerSelection = (questionId: string, answer: string) => {
     setUserAnswers((prev) => ({ ...prev, [questionId]: answer }));
-  };
-
-  const handleNextQuestion = () => {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex((prev) => prev + 1);
-      setShowHint(false);
-      if (difficulty === "MEDIUM") {
-        setTimeRemaining(120);
-      } else if (difficulty === "HARD") {
-        setTimeRemaining(30);
-      }
-    } else {
-      handleSubmitQuiz();
-    }
-  };
-
-  const handlePreviousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex((prev) => prev - 1);
-      setShowHint(false);
-      if (difficulty === "MEDIUM") {
-        setTimeRemaining(120);
-      } else if (difficulty === "HARD") {
-        setTimeRemaining(30);
-      }
-    }
   };
 
   const handleSubmitQuiz = async () => {
@@ -170,40 +144,108 @@ export default function QuizPage() {
     }
   };
 
+  const handleSkipQuestion = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex((prev) => prev + 1);
+      setShowHint(false);
+      resetTimer();
+    }
+  };
+
+  const resetTimer = () => {
+    if (difficulty === "MEDIUM") {
+      setTimeRemaining(60);
+    } else if (difficulty === "HARD") {
+      setTimeRemaining(30);
+    }
+  };
+
+  const handleNextQuestion = () => {
+    const currentQuestionId = questions[currentQuestionIndex].id;
+    if (userAnswers[currentQuestionId]) {
+      if (currentQuestionIndex < questions.length - 1) {
+        setCurrentQuestionIndex((prev) => prev + 1);
+        setShowHint(false);
+        resetTimer();
+      } else {
+        handleSubmitQuiz();
+      }
+    } else {
+      alert("Please select an answer before moving to the next question.");
+    }
+  };
+
+  const handlePreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex((prev) => prev - 1);
+      setShowHint(false);
+      resetTimer();
+    }
+  };
+
   const renderDifficultySelection = () => (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">
+    <div className="container mx-auto p-4 max-w-3xl">
+      <h1 className="text-4xl font-bold mb-6 text-center text-blue-600">
         Welcome to the Drone Pilot Quiz
       </h1>
-      <p className="mb-4">
-        Hello, {currentUser.username}! Please select a difficulty level to
-        begin:
+      <p className="mb-8 text-xl text-center text-gray-700">
+        Hello, <span className="font-semibold">{currentUser.username}</span>!
+        Please select a difficulty level to begin:
       </p>
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
         {(["EASY", "MEDIUM", "HARD"] as Difficulty[]).map((level) => (
           <button
             key={level}
             onClick={() => handleDifficultySelection(level)}
-            className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            className={`w-full py-4 px-6 rounded-lg font-bold text-white transition-transform transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-opacity-50 ${
+              level === "EASY"
+                ? "bg-green-500 hover:bg-green-600 focus:ring-green-300"
+                : level === "MEDIUM"
+                ? "bg-yellow-500 hover:bg-yellow-600 focus:ring-yellow-300"
+                : "bg-red-500 hover:bg-red-600 focus:ring-red-300"
+            }`}
           >
             {level}
           </button>
         ))}
       </div>
-      <div className="mt-8">
-        <h2 className="text-xl font-bold mb-2">Difficulty Levels:</h2>
-        <ul className="list-disc list-inside">
-          <li>
-            EASY: No timer, prompt provided, optional hint can be displayed
-          </li>
-          <li>
-            MEDIUM: 120 second timer per question, no prompt provided, optional
-            hint can be displayed
-          </li>
-          <li>
-            HARD: 30 second timer, question and multiple choice answers only
-          </li>
-        </ul>
+      <div className="bg-gray-100 rounded-lg p-6 shadow-md">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800">
+          Difficulty Levels:
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            {
+              level: "EASY",
+              color: "text-green-600",
+              bgColor: "bg-green-100",
+              description:
+                "No timer. Full text prompt provided. Multiple choice question and answers. Optional hint can be displayed.",
+            },
+            {
+              level: "MEDIUM",
+              color: "text-yellow-600",
+              bgColor: "bg-yellow-100",
+              description:
+                "60 second timer per question. No prompt provided - just question and answers. Optional hint can be displayed.",
+            },
+            {
+              level: "HARD",
+              color: "text-red-600",
+              bgColor: "bg-red-100",
+              description:
+                "30 second timer. Question and multiple choice answers only. No hint available.",
+            },
+          ].map(({ level, color, bgColor, description }) => (
+            <div
+              key={level}
+              className={`${bgColor} rounded-lg p-4 flex flex-col`}
+            >
+              <span className={`font-bold ${color} text-lg mb-2`}>{level}</span>
+              <span className="text-gray-700 text-sm">{description}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -238,6 +280,8 @@ export default function QuizPage() {
 
   const renderQuestion = () => {
     const currentQuestion = questions[currentQuestionIndex];
+    const isAnswered = userAnswers[currentQuestion.id] !== undefined;
+    const isLastQuestion = currentQuestionIndex === questions.length - 1;
 
     return (
       <div className="container mx-auto p-4">
@@ -289,7 +333,7 @@ export default function QuizPage() {
             )}
           </div>
         )}
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center">
           <button
             onClick={handlePreviousQuestion}
             disabled={currentQuestionIndex === 0}
@@ -298,12 +342,21 @@ export default function QuizPage() {
             Previous
           </button>
           <button
-            onClick={handleNextQuestion}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            onClick={handleSkipQuestion}
+            className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded"
           >
-            {currentQuestionIndex === questions.length - 1
-              ? "Submit Quiz"
-              : "Next"}
+            Skip
+          </button>
+          <button
+            onClick={handleNextQuestion}
+            disabled={!isAnswered}
+            className={`font-bold py-2 px-4 rounded ${
+              isAnswered
+                ? "bg-blue-500 hover:bg-blue-700 text-white"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+          >
+            {isLastQuestion ? "Submit Quiz" : "Next"}
           </button>
         </div>
       </div>
