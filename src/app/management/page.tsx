@@ -1,21 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { gql, useQuery, useMutation, useApolloClient } from "@apollo/client";
+import { gql, useQuery, useMutation } from "@apollo/client";
 import { useAuth } from "../../contexts/AuthContext";
 
-const GET_CURRENT_USER = gql`
-  query GetCurrentUser {
-    me {
-      id
-      username
-      email
-      role
-    }
-  }
-`;
+import Sidebar from "./Sidebar";
+import QuestionManagement from "./QuestionManagement";
+import UserManagement from "./UserManagement";
 
+// GraphQL queries and mutations
 const GET_ALL_USERS = gql`
   query AllUsers {
     users {
@@ -36,6 +30,7 @@ const GET_ALL_QUESTIONS = gql`
       answers
       correctAnswer
       hint
+      points
       createdBy {
         id
         username
@@ -53,6 +48,7 @@ const CREATE_QUESTION = gql`
       answers
       correctAnswer
       hint
+      points
     }
   }
 `;
@@ -66,6 +62,7 @@ const UPDATE_QUESTION = gql`
       answers
       correctAnswer
       hint
+      points
       createdBy {
         id
         username
@@ -77,6 +74,20 @@ const UPDATE_QUESTION = gql`
 const DELETE_QUESTION = gql`
   mutation DeleteQuestion($questionId: ID!) {
     deleteQuestion(id: $questionId)
+  }
+`;
+
+const REGISTER_USER = gql`
+  mutation RegisterUser($input: CreateUserInput!) {
+    register(input: $input) {
+      user {
+        id
+        username
+        email
+        role
+      }
+      token
+    }
   }
 `;
 
@@ -97,13 +108,71 @@ const DELETE_USER = gql`
   }
 `;
 
-export default function ManagementPage() {
+// Types
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  role: string;
+}
+
+type Question = {
+  id: string;
+  prompt: string;
+  questionText: string;
+  answers: string[];
+  correctAnswer: string;
+  hint?: string;
+  points: number;
+  createdBy: {
+    id: string;
+    username: string;
+  };
+};
+
+interface MainContentProps {
+  activeTab: string;
+  user: User;
+  usersData?: { users: User[] };
+  questionsData?: { questions: Question[] };
+  handleChangeUserRole: (userId: string, newRole: string) => void;
+  handleDeleteUser: (userId: string) => void;
+  handleCreateQuestion: (event: React.FormEvent<HTMLFormElement>) => void;
+  handleUpdateQuestion: (id: string, updatedQuestion: Question) => void;
+  handleDeleteQuestion: (id: string) => void;
+  editingQuestion: Question | null;
+  setEditingQuestion: (question: Question | null) => void;
+  handleRegisterUser: (newUser: Omit<User, "id">) => void;
+}
+
+// Main content area
+const MainContent: React.FC<MainContentProps> = ({
+  activeTab,
+  user,
+  handleRegisterUser,
+  ...props
+}) => {
+  switch (activeTab) {
+    case "users":
+      return (
+        <UserManagement
+          user={user}
+          {...props}
+          handleRegisterUser={handleRegisterUser}
+        />
+      );
+    case "questions":
+      return <QuestionManagement user={user} {...props} />;
+    default:
+      return <div>Select a tab</div>;
+  }
+};
+
+const ManagementPage: React.FC = () => {
   const router = useRouter();
-  const { user, loading: authLoading, logout } = useAuth();
-  const [editingQuestion, setEditingQuestion] = useState<any>(null);
-  const [isUserSectionCollapsed, setIsUserSectionCollapsed] = useState(false);
-  const [isQuestionSectionCollapsed, setIsQuestionSectionCollapsed] =
-    useState(false);
+  const { user, loading: authLoading } = useAuth();
+  const [activeTab, setActiveTab] = useState<string>("users");
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -133,13 +202,9 @@ export default function ManagementPage() {
   const [createQuestion] = useMutation(CREATE_QUESTION);
   const [updateQuestion] = useMutation(UPDATE_QUESTION);
   const [deleteQuestion] = useMutation(DELETE_QUESTION);
+  const [registerUser] = useMutation(REGISTER_USER);
   const [changeUserRole] = useMutation(CHANGE_USER_ROLE);
   const [deleteUser] = useMutation(DELETE_USER);
-
-  const handleLogout = async () => {
-    logout();
-    router.push("/login");
-  };
 
   const handleCreateQuestion = async (
     event: React.FormEvent<HTMLFormElement>
@@ -160,6 +225,10 @@ export default function ManagementPage() {
       form.elements.namedItem("correctAnswer") as HTMLInputElement
     ).value;
     const hint = (form.elements.namedItem("hint") as HTMLInputElement).value;
+    const points = parseInt(
+      (form.elements.namedItem("points") as HTMLInputElement).value,
+      10
+    );
 
     try {
       await createQuestion({
@@ -170,6 +239,7 @@ export default function ManagementPage() {
             answers,
             correctAnswer,
             hint,
+            points,
           },
         },
       });
@@ -194,6 +264,7 @@ export default function ManagementPage() {
             answers: editingQuestion.answers,
             correctAnswer: editingQuestion.correctAnswer,
             hint: editingQuestion.hint,
+            points: editingQuestion.points,
           },
         },
       });
@@ -220,6 +291,35 @@ export default function ManagementPage() {
       } catch (err) {
         console.error("Error deleting question:", err);
         alert("Error deleting question");
+      }
+    }
+  };
+
+  const handleRegisterUser = async (newUser: Omit<User, "id">) => {
+    try {
+      const { data } = await registerUser({
+        variables: {
+          input: {
+            username: newUser.username,
+            email: newUser.email,
+            password: "defaultPassword", // You should handle this more securely
+            role: newUser.role,
+          },
+        },
+      });
+      if (data?.register?.user) {
+        alert("User registered successfully");
+        refetchUsers();
+      } else {
+        alert("Failed to register user");
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        alert(`Error registering user: ${err.message}`);
+        console.error("Detailed error:", err);
+      } else {
+        alert("An unknown error occurred");
+        console.error("Unknown error:", err);
       }
     }
   };
@@ -256,315 +356,29 @@ export default function ManagementPage() {
   };
 
   if (authLoading) return <p>Loading...</p>;
-  if (!user) return null; // The useEffect hook will handle the redirection
-
-  const canManageUsers = ["SUPER_ADMIN", "ADMIN"].includes(user.role);
-  const canManageQuestions = ["SUPER_ADMIN", "ADMIN", "EDITOR"].includes(
-    user.role
-  );
+  if (!user) return null;
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Management Dashboard</h1>
-      <p className="mb-4">
-        Welcome, {user.username} ({user.role})
-      </p>
-
-      <button
-        onClick={handleLogout}
-        className="mb-4 p-2 bg-red-500 text-white rounded hover:bg-red-600"
-      >
-        Logout
-      </button>
-
-      {canManageUsers && (
-        <section className="mb-8">
-          <h2
-            className="text-xl font-semibold mb-2 cursor-pointer flex items-center"
-            onClick={() => setIsUserSectionCollapsed(!isUserSectionCollapsed)}
-          >
-            Manage Users
-            <svg
-              className={`ml-2 h-5 w-5 transform ${
-                isUserSectionCollapsed ? "rotate-0" : "rotate-180"
-              }`}
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </h2>
-          {!isUserSectionCollapsed && (
-            <table className="w-full border-collapse border border-gray-300">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="border border-gray-300 p-2">Username</th>
-                  <th className="border border-gray-300 p-2">Email</th>
-                  <th className="border border-gray-300 p-2">Role</th>
-                  <th className="border border-gray-300 p-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {usersData?.users.map((user: any) => (
-                  <tr key={user.id}>
-                    <td className="border border-gray-300 p-2">
-                      {user.username}
-                    </td>
-                    <td className="border border-gray-300 p-2">{user.email}</td>
-                    <td className="border border-gray-300 p-2">
-                      <select
-                        value={user.role}
-                        onChange={(e) =>
-                          handleChangeUserRole(user.id, e.target.value)
-                        }
-                        className="w-full p-1"
-                      >
-                        <option value="USER">USER</option>
-                        <option value="EDITOR">EDITOR</option>
-                        <option value="ADMIN">ADMIN</option>
-                        <option value="SUPER_ADMIN" disabled>
-                          SUPER_ADMIN
-                        </option>
-                      </select>
-                    </td>
-                    <td className="border border-gray-300 p-2 text-center">
-                      <button
-                        onClick={() => handleDeleteUser(user.id)}
-                        className="bg-red-500 text-white p-1 rounded hover:bg-red-600"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </section>
-      )}
-
-      {canManageQuestions && (
-        <section className="mb-8">
-          <h2
-            className="text-xl font-semibold mb-2 cursor-pointer flex items-center"
-            onClick={() =>
-              setIsQuestionSectionCollapsed(!isQuestionSectionCollapsed)
-            }
-          >
-            Question Management
-            <svg
-              className={`ml-2 h-5 w-5 transform ${
-                isQuestionSectionCollapsed ? "rotate-0" : "rotate-180"
-              }`}
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </h2>
-          {!isQuestionSectionCollapsed && (
-            <>
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold mb-2">Add New Question</h3>
-                <form onSubmit={handleCreateQuestion} className="space-y-4">
-                  <input
-                    type="text"
-                    name="prompt"
-                    placeholder="Prompt"
-                    required
-                    className="w-full p-2 border rounded"
-                  />
-                  <input
-                    type="text"
-                    name="questionText"
-                    placeholder="Question Text"
-                    required
-                    className="w-full p-2 border rounded"
-                  />
-                  <input
-                    type="text"
-                    name="answers"
-                    placeholder="Answers (comma-separated)"
-                    required
-                    className="w-full p-2 border rounded"
-                  />
-                  <input
-                    type="text"
-                    name="correctAnswer"
-                    placeholder="Correct Answer"
-                    required
-                    className="w-full p-2 border rounded"
-                  />
-                  <input
-                    type="text"
-                    name="hint"
-                    placeholder="Hint (optional)"
-                    className="w-full p-2 border rounded"
-                  />
-                  <button
-                    type="submit"
-                    className="w-full p-2 bg-green-500 text-white rounded hover:bg-green-600"
-                  >
-                    Create Question
-                  </button>
-                </form>
-              </div>
-
-              <h3 className="text-lg font-semibold mb-2">Manage Questions</h3>
-              {questionsLoading ? (
-                <p>Loading questions...</p>
-              ) : questionsError ? (
-                <p>Error loading questions: {questionsError.message}</p>
-              ) : (
-                <table className="w-full border-collapse border border-gray-300 mb-4">
-                  <thead>
-                    <tr className="bg-gray-100">
-                      <th className="border border-gray-300 p-2">Prompt</th>
-                      <th className="border border-gray-300 p-2">
-                        Question Text
-                      </th>
-                      <th className="border border-gray-300 p-2">Answers</th>
-                      <th className="border border-gray-300 p-2">
-                        Correct Answer
-                      </th>
-                      <th className="border border-gray-300 p-2">Hint</th>
-                      <th className="border border-gray-300 p-2">Created By</th>
-                      <th className="border border-gray-300 p-2">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {questionsData?.questions.map((question: any) => (
-                      <tr key={question.id}>
-                        <td className="border border-gray-300 p-2">
-                          {editingQuestion?.id === question.id ? (
-                            <input
-                              type="text"
-                              value={editingQuestion.prompt}
-                              onChange={(e) =>
-                                setEditingQuestion({
-                                  ...editingQuestion,
-                                  prompt: e.target.value,
-                                })
-                              }
-                              className="w-full p-1 border rounded"
-                            />
-                          ) : (
-                            question.prompt
-                          )}
-                        </td>
-                        <td className="border border-gray-300 p-2">
-                          {editingQuestion?.id === question.id ? (
-                            <input
-                              type="text"
-                              value={editingQuestion.questionText}
-                              onChange={(e) =>
-                                setEditingQuestion({
-                                  ...editingQuestion,
-                                  questionText: e.target.value,
-                                })
-                              }
-                              className="w-full p-1 border rounded"
-                            />
-                          ) : (
-                            question.questionText
-                          )}
-                        </td>
-                        <td className="border border-gray-300 p-2">
-                          {editingQuestion?.id === question.id ? (
-                            <input
-                              type="text"
-                              value={editingQuestion.answers.join(", ")}
-                              onChange={(e) =>
-                                setEditingQuestion({
-                                  ...editingQuestion,
-                                  answers: e.target.value.split(", "),
-                                })
-                              }
-                              className="w-full p-1 border rounded"
-                            />
-                          ) : (
-                            question.answers.join(", ")
-                          )}
-                        </td>
-                        <td className="border border-gray-300 p-2">
-                          {editingQuestion?.id === question.id ? (
-                            <input
-                              type="text"
-                              value={editingQuestion.correctAnswer}
-                              onChange={(e) =>
-                                setEditingQuestion({
-                                  ...editingQuestion,
-                                  correctAnswer: e.target.value,
-                                })
-                              }
-                              className="w-full p-1 border rounded"
-                            />
-                          ) : (
-                            question.correctAnswer
-                          )}
-                        </td>
-                        <td className="border border-gray-300 p-2">
-                          {editingQuestion?.id === question.id ? (
-                            <input
-                              type="text"
-                              value={editingQuestion.hint}
-                              onChange={(e) =>
-                                setEditingQuestion({
-                                  ...editingQuestion,
-                                  hint: e.target.value,
-                                })
-                              }
-                              className="w-full p-1 border rounded"
-                            />
-                          ) : (
-                            question.hint
-                          )}
-                        </td>
-                        <td className="border border-gray-300 p-2">
-                          {question.createdBy.username}
-                        </td>
-                        <td className="border border-gray-300 p-2 text-center">
-                          {editingQuestion?.id === question.id ? (
-                            <button
-                              onClick={() => handleUpdateQuestion(question.id)}
-                              className="bg-green-500 text-white p-1 rounded hover:bg-green-600 mr-2"
-                            >
-                              Save
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => setEditingQuestion(question)}
-                              className="bg-blue-500 text-white p-1 rounded hover:bg-blue-600 mr-2"
-                            >
-                              Edit
-                            </button>
-                          )}
-                          <button
-                            onClick={() => handleDeleteQuestion(question.id)}
-                            className="bg-red-500 text-white p-1 rounded hover:bg-red-600"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </>
-          )}
-        </section>
-      )}
+    <div className="flex">
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} user={user} />
+      <main className="ml-64 p-8 flex-grow">
+        <MainContent
+          activeTab={activeTab}
+          user={user}
+          usersData={usersData}
+          questionsData={questionsData}
+          handleChangeUserRole={handleChangeUserRole}
+          handleDeleteUser={handleDeleteUser}
+          handleCreateQuestion={handleCreateQuestion}
+          handleUpdateQuestion={handleUpdateQuestion}
+          handleDeleteQuestion={handleDeleteQuestion}
+          editingQuestion={editingQuestion}
+          setEditingQuestion={setEditingQuestion}
+          handleRegisterUser={handleRegisterUser}
+        />
+      </main>
     </div>
   );
-}
+};
+
+export default ManagementPage;
