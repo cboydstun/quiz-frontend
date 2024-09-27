@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 
-// Types
 type User = {
   id: string;
   username: string;
@@ -12,7 +11,7 @@ interface UserManagementProps {
   usersData?: { users: User[] };
   handleChangeUserRole: (userId: string, newRole: string) => void;
   handleDeleteUser: (userId: string) => void;
-  handleRegisterUser: (newUser: Omit<User, "id">) => void; // Update the signature
+  handleRegisterUser: (newUser: Omit<User, "id">) => void;
   user: User;
 }
 
@@ -47,6 +46,11 @@ const UserManagement: React.FC<UserManagementProps> = ({
     setNewUser({ username: "", email: "", role: "USER" });
   };
 
+  // Filter users based on the current user's role
+  const filteredUsers = usersData?.users.filter((u) => 
+    user.role === "SUPER_ADMIN" ? true : u.role !== "SUPER_ADMIN"
+  ) || [];
+
   return (
     <div>
       <h2 className="text-2xl font-bold mb-4">User Management</h2>
@@ -66,30 +70,30 @@ const UserManagement: React.FC<UserManagementProps> = ({
           </tr>
         </thead>
         <tbody>
-          {usersData?.users.map((user) => (
-            <tr key={user.id}>
-              <td className="border border-gray-300 p-2">{user.username}</td>
-              <td className="border border-gray-300 p-2">{user.email}</td>
+          {filteredUsers.map((u) => (
+            <tr key={u.id}>
+              <td className="border border-gray-300 p-2">{u.username}</td>
+              <td className="border border-gray-300 p-2">{u.email}</td>
               <td className="border border-gray-300 p-2">
                 <select
-                  value={user.role}
-                  onChange={(e) =>
-                    handleChangeUserRole(user.id, e.target.value)
-                  }
+                  value={u.role}
+                  onChange={(e) => handleChangeUserRole(u.id, e.target.value)}
                   className="w-full p-1"
+                  disabled={u.role === "SUPER_ADMIN" && user.role !== "SUPER_ADMIN"}
                 >
                   <option value="USER">USER</option>
                   <option value="EDITOR">EDITOR</option>
                   <option value="ADMIN">ADMIN</option>
-                  <option value="SUPER_ADMIN" disabled>
-                    SUPER_ADMIN
-                  </option>
+                  {user.role === "SUPER_ADMIN" && (
+                    <option value="SUPER_ADMIN" disabled>SUPER_ADMIN</option>
+                  )}
                 </select>
               </td>
               <td className="border border-gray-300 p-2 text-center">
                 <button
-                  onClick={() => handleDeleteUser(user.id)}
+                  onClick={() => handleDeleteUser(u.id)}
                   className="bg-red-500 text-white p-1 rounded hover:bg-red-600"
+                  disabled={u.role === "SUPER_ADMIN" && user.role !== "SUPER_ADMIN"}
                 >
                   Delete
                 </button>

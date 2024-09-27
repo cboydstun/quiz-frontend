@@ -7,13 +7,15 @@ type User = {
   role: string;
 };
 
-type SidebarProps = {
+interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   user: User;
-};
+}
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user }) => {
+  const canManageUsers = ['ADMIN', 'SUPER_ADMIN'].includes(user.role);
+
   return (
     <div className="w-64 bg-gray-800 text-white h-screen fixed left-0 top-0 overflow-y-auto">
       <div className="p-4">
@@ -23,16 +25,18 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user }) => {
       </div>
       <nav>
         <ul>
-          <li>
-            <button
-              className={`w-full text-left p-4 hover:bg-gray-700 ${
-                activeTab === "users" ? "bg-gray-700" : ""
-              }`}
-              onClick={() => setActiveTab("users")}
-            >
-              User Management
-            </button>
-          </li>
+          {canManageUsers && (
+            <li>
+              <button
+                className={`w-full text-left p-4 hover:bg-gray-700 ${
+                  activeTab === "users" ? "bg-gray-700" : ""
+                }`}
+                onClick={() => setActiveTab("users")}
+              >
+                User Management
+              </button>
+            </li>
+          )}
           <li>
             <button
               className={`w-full text-left p-4 hover:bg-gray-700 ${
@@ -43,6 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user }) => {
               Question Management
             </button>
           </li>
+          {/* Add more sidebar items here as needed */}
         </ul>
       </nav>
     </div>

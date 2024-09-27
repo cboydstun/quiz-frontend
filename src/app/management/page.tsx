@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { gql, useQuery, useMutation } from "@apollo/client";
+import { gql, useQuery, useMutation, ApolloError } from "@apollo/client";
 import { useAuth } from "../../contexts/AuthContext";
 
 import Sidebar from "./Sidebar";
@@ -134,6 +134,8 @@ interface MainContentProps {
   activeTab: string;
   user: User;
   usersData?: { users: User[] };
+  usersLoading: boolean;
+  usersError?: ApolloError;
   questionsData?: { questions: Question[] };
   handleChangeUserRole: (userId: string, newRole: string) => void;
   handleDeleteUser: (userId: string) => void;
@@ -149,16 +151,20 @@ interface MainContentProps {
 const MainContent: React.FC<MainContentProps> = ({
   activeTab,
   user,
-  handleRegisterUser,
+  usersData,
+  usersLoading,
+  usersError,
   ...props
 }) => {
   switch (activeTab) {
     case "users":
+      if (usersLoading) return <div>Loading users...</div>;
+      if (usersError) return <div>Error loading users: {usersError.message}</div>;
       return (
         <UserManagement
           user={user}
+          usersData={usersData}
           {...props}
-          handleRegisterUser={handleRegisterUser}
         />
       );
     case "questions":
@@ -171,14 +177,8 @@ const MainContent: React.FC<MainContentProps> = ({
 const ManagementPage: React.FC = () => {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<string>("users");
+  const [activeTab, setActiveTab] = useState<string>("questions");
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/login");
-    }
-  }, [authLoading, user, router]);
 
   const {
     loading: usersLoading,
@@ -324,12 +324,30 @@ const ManagementPage: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login");
+    } else if (user && ["SUPER_ADMIN", "ADMIN"].includes(user.role)) {
+      if (activeTab === "users") {
+        refetchUsers();
+      }
+    } else if (user && !["SUPER_ADMIN", "ADMIN"].includes(user.role) && activeTab === "users") {
+      setActiveTab("questions");
+    }
+  }, [authLoading, user, router, activeTab, refetchUsers]);
+
   const handleChangeUserRole = async (userId: string, newRole: string) => {
     try {
       await changeUserRole({
         variables: { userId, newRole },
       });
-      await refetchUsers();
+      if (userId === user?.id) {
+        // If the current user's role was changed, we might need to handle this differently
+        // For now, we'll just refetch the users
+        refetchUsers();
+      } else {
+        await refetchUsers();
+      }
     } catch (err) {
       alert("Error changing user role");
       console.error(err);
@@ -366,6 +384,8 @@ const ManagementPage: React.FC = () => {
           activeTab={activeTab}
           user={user}
           usersData={usersData}
+          usersLoading={usersLoading}
+          usersError={usersError}
           questionsData={questionsData}
           handleChangeUserRole={handleChangeUserRole}
           handleDeleteUser={handleDeleteUser}
