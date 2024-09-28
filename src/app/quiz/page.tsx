@@ -75,11 +75,11 @@ export default function QuizPage() {
   useEffect(() => {
     if (userData && userData.me) {
       setCurrentUser(userData.me);
-      if (userData.me.role !== "USER") {
-        router.push("/");
-      }
+    } else if (!userLoading && !userData?.me) {
+      // Redirect to login page if user is not authenticated
+      router.push("/login");
     }
-  }, [userData, router]);
+  }, [userData, userLoading, router]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -103,7 +103,7 @@ export default function QuizPage() {
   if (userLoading || questionsLoading) return <p>Loading...</p>;
   if (userError) return <p>Error: {userError.message}</p>;
   if (questionsError) return <p>Error: {questionsError.message}</p>;
-  if (!currentUser || !questionsData) return null;
+  if (!userData?.me || !questionsData) return null;
 
   const questions: Question[] = questionsData.questions;
 
@@ -189,7 +189,7 @@ export default function QuizPage() {
         Welcome to the Drone Pilot Quiz
       </h1>
       <p className="mb-8 text-xl text-center text-gray-700">
-        Hello, <span className="font-semibold">{currentUser.username}</span>!
+        Hello, <span className="font-semibold">{userData.me.username}</span>!
         Please select a difficulty level to begin:
       </p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
@@ -254,7 +254,7 @@ export default function QuizPage() {
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Quiz Completed</h1>
       <p className="mb-4">
-        Thank you for completing the {difficulty} quiz, {currentUser.username}!
+        Thank you for completing the {difficulty} quiz, {userData.me.username}!
       </p>
       {quizScore && (
         <p className="text-lg">
@@ -288,7 +288,7 @@ export default function QuizPage() {
         <h1 className="text-2xl font-bold mb-4">
           Drone Pilot Quiz - {difficulty} Level
         </h1>
-        <p className="mb-4">Welcome, {currentUser.username}!</p>
+        <p className="mb-4">Welcome, {userData.me.username}!</p>
         {timeRemaining !== null && (
           <p className="text-lg font-bold mb-4">
             Time Remaining: {timeRemaining} seconds
