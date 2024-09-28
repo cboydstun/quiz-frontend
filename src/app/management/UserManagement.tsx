@@ -7,6 +7,9 @@ type User = {
   role: string;
 };
 
+type SortField = 'username' | 'email' | 'role';
+type SortDirection = 'asc' | 'desc';
+
 interface UserManagementProps {
   usersData?: { users: User[] };
   handleChangeUserRole: (userId: string, newRole: string) => void;
@@ -28,6 +31,9 @@ const UserManagement: React.FC<UserManagementProps> = ({
     email: "",
     role: "USER",
   });
+  const [roleFilter, setRoleFilter] = useState<string>("ALL");
+  const [sortField, setSortField] = useState<SortField>('username');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
@@ -46,31 +52,88 @@ const UserManagement: React.FC<UserManagementProps> = ({
     setNewUser({ username: "", email: "", role: "USER" });
   };
 
-  // Filter users based on the current user's role
-  const filteredUsers = usersData?.users.filter((u) => 
-    user.role === "SUPER_ADMIN" ? true : u.role !== "SUPER_ADMIN"
-  ) || [];
+  const handleSort = (field: SortField) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Filter and sort users
+  const filteredAndSortedUsers = usersData?.users
+    .filter((u) => 
+      (user.role === "SUPER_ADMIN" || u.role !== "SUPER_ADMIN") &&
+      (roleFilter === "ALL" || u.role === roleFilter)
+    )
+    .sort((a, b) => {
+      if (a[sortField] < b[sortField]) return sortDirection === 'asc' ? -1 : 1;
+      if (a[sortField] > b[sortField]) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    }) || [];
+
+  const SortIndicator = ({ field }: { field: SortField }) => {
+    if (field !== sortField) return null;
+    return (
+      <span className="ml-1">
+        {sortDirection === 'asc' ? '▲' : '▼'}
+      </span>
+    );
+  };
 
   return (
     <div>
       <h2 className="text-2xl font-bold mb-4">User Management</h2>
-      <button
-        onClick={openModal}
-        className="mb-4 bg-green-500 text-white p-2 rounded hover:bg-green-600"
-      >
-        Create New User
-      </button>
+      <div className="flex justify-between items-center mb-4">
+        <button
+          onClick={openModal}
+          className="bg-green-500 text-white p-2 rounded hover:bg-green-600"
+        >
+          Create New User
+        </button>
+        <div>
+          <label htmlFor="roleFilter" className="mr-2">Filter by Role:</label>
+          <select
+            id="roleFilter"
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="p-2 border rounded"
+          >
+            <option value="ALL">All Roles</option>
+            <option value="USER">USER</option>
+            <option value="EDITOR">EDITOR</option>
+            <option value="ADMIN">ADMIN</option>
+            {user.role === "SUPER_ADMIN" && <option value="SUPER_ADMIN">SUPER_ADMIN</option>}
+          </select>
+        </div>
+      </div>
       <table className="w-full border-collapse border border-gray-300">
         <thead>
           <tr className="bg-gray-100">
-            <th className="border border-gray-300 p-2">Username</th>
-            <th className="border border-gray-300 p-2">Email</th>
-            <th className="border border-gray-300 p-2">Role</th>
+            <th 
+              className="border border-gray-300 p-2 cursor-pointer"
+              onClick={() => handleSort('username')}
+            >
+              Username <SortIndicator field="username" />
+            </th>
+            <th 
+              className="border border-gray-300 p-2 cursor-pointer"
+              onClick={() => handleSort('email')}
+            >
+              Email <SortIndicator field="email" />
+            </th>
+            <th 
+              className="border border-gray-300 p-2 cursor-pointer"
+              onClick={() => handleSort('role')}
+            >
+              Role <SortIndicator field="role" />
+            </th>
             <th className="border border-gray-300 p-2">Actions</th>
           </tr>
         </thead>
         <tbody>
-          {filteredUsers.map((u) => (
+          {filteredAndSortedUsers.map((u) => (
             <tr key={u.id}>
               <td className="border border-gray-300 p-2">{u.username}</td>
               <td className="border border-gray-300 p-2">{u.email}</td>
@@ -85,7 +148,7 @@ const UserManagement: React.FC<UserManagementProps> = ({
                   <option value="EDITOR">EDITOR</option>
                   <option value="ADMIN">ADMIN</option>
                   {user.role === "SUPER_ADMIN" && (
-                    <option value="SUPER_ADMIN" disabled>SUPER_ADMIN</option>
+                    <option value="SUPER_ADMIN">SUPER_ADMIN</option>
                   )}
                 </select>
               </td>
