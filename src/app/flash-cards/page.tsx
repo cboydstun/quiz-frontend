@@ -100,6 +100,16 @@ export default function FlashCardsPage() {
     }
   };
 
+  const renderCardBack = (card: FlashCard) => {
+    if (card.correctAnswer.toLowerCase() === "all of the above") {
+      return card.answers.filter(
+        (answer) => answer.toLowerCase() !== "all of the above"
+      );
+    } else {
+      return [card.correctAnswer];
+    }
+  };
+
   if (authLoading || idsLoading)
     return <p className="text-center text-xl mt-8">Loading...</p>;
   if (authError)
@@ -164,11 +174,14 @@ export default function FlashCardsPage() {
       >
         <div className="flip-card-inner relative w-full h-full">
           <div className="flip-card-front absolute w-full h-full bg-white border-2 border-gray-300 rounded-lg shadow-lg p-6 flex flex-col items-center justify-center">
-            <p className="text-lg mb-2 text-gray-600">{currentCard.prompt}</p>
             <p className="text-2xl text-center">{currentCard.questionText}</p>
           </div>
-          <div className="flip-card-back absolute w-full h-full bg-blue-100 border-2 border-blue-300 rounded-lg shadow-lg p-6 flex items-center justify-center">
-            <p className="text-2xl text-center">{currentCard.correctAnswer}</p>
+          <div className="flip-card-back absolute w-full h-full bg-blue-100 border-2 border-blue-300 rounded-lg shadow-lg p-6 flex flex-col items-center justify-center">
+            {renderCardBack(currentCard).map((answer, index) => (
+              <p key={index} className="text-xl text-center mb-2">
+                {answer}
+              </p>
+            ))}
           </div>
         </div>
       </div>

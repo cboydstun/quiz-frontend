@@ -71,6 +71,11 @@ export default function Navbar() {
           <Link href="/faq" className="text-white hover:text-gray-300">
             FAQ
           </Link>
+          {isLoggedIn && (
+            <Link href="/profile" className="text-white hover:text-gray-300">
+              Profile
+            </Link>
+          )}
           <button
             onClick={handleAuthClick}
             className="text-white hover:text-gray-300 bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded transition-colors duration-300"
@@ -119,6 +124,14 @@ export default function Navbar() {
           >
             Flash Cards
           </Link>
+          {isLoggedIn && (
+            <Link
+              href="/profile"
+              className="block text-white py-2 px-4 hover:bg-gray-700"
+            >
+              Profile
+            </Link>
+          )}
           <button
             onClick={handleAuthClick}
             className="block text-white py-2 px-4 hover:bg-gray-700 w-full text-left"
