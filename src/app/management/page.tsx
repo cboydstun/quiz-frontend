@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 import { gql, useQuery, useMutation, ApolloError } from "@apollo/client";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -159,14 +159,9 @@ const MainContent: React.FC<MainContentProps> = ({
   switch (activeTab) {
     case "users":
       if (usersLoading) return <div>Loading users...</div>;
-      if (usersError) return <div>Error loading users: {usersError.message}</div>;
-      return (
-        <UserManagement
-          user={user}
-          usersData={usersData}
-          {...props}
-        />
-      );
+      if (usersError)
+        return <div>Error loading users: {usersError.message}</div>;
+      return <UserManagement user={user} usersData={usersData} {...props} />;
     case "questions":
       return <QuestionManagement user={user} {...props} />;
     default:
@@ -331,7 +326,11 @@ const ManagementPage: React.FC = () => {
       if (activeTab === "users") {
         refetchUsers();
       }
-    } else if (user && !["SUPER_ADMIN", "ADMIN"].includes(user.role) && activeTab === "users") {
+    } else if (
+      user &&
+      !["SUPER_ADMIN", "ADMIN"].includes(user.role) &&
+      activeTab === "users"
+    ) {
       setActiveTab("questions");
     }
   }, [authLoading, user, router, activeTab, refetchUsers]);

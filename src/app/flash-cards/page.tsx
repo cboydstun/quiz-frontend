@@ -43,7 +43,7 @@ export default function FlashCardsPage() {
   const [flashCards, setFlashCards] = useState<FlashCard[]>([]);
   const [questionIds, setQuestionIds] = useState<string[]>([]);
 
-  const { user, loading: authLoading, error: authError } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
   const {
@@ -112,12 +112,6 @@ export default function FlashCardsPage() {
 
   if (authLoading || idsLoading)
     return <p className="text-center text-xl mt-8">Loading...</p>;
-  if (authError)
-    return (
-      <p className="text-center text-xl mt-8 text-red-500">
-        Authentication error: {authError.message}
-      </p>
-    );
   if (idsError)
     return (
       <p className="text-center text-xl mt-8 text-red-500">

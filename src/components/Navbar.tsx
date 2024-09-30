@@ -21,9 +21,13 @@ export default function Navbar() {
       if (isLoggedIn) {
         await logout();
         setIsLoggedIn(false);
-        router.push("/");
+        if (router) {
+          router.push("/");
+        }
       } else {
-        router.push("/login");
+        if (router) {
+          router.push("/login");
+        }
       }
     } catch (err) {
       if (err instanceof ApolloError) {

@@ -23,6 +23,7 @@ const GET_QUIZ_QUESTIONS = gql`
       questionText
       answers
       hint
+      points
     }
   }
 `;
@@ -42,14 +43,17 @@ interface Question {
   questionText: string;
   answers: string[];
   hint?: string;
+  points: number;
 }
 
 type Difficulty = "EASY" | "MEDIUM" | "HARD";
+type QuestionCount = 10 | 20 | 50 | 100 | 200 | "infinite";
 
 export default function QuizPage() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
+  const [questionCount, setQuestionCount] = useState<QuestionCount>(10);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<{ [key: string]: string }>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
@@ -59,12 +63,21 @@ export default function QuizPage() {
   } | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [showHint, setShowHint] = useState(false);
+  const [showQuitConfirmation, setShowQuitConfirmation] = useState(false);
 
   const {
     loading: userLoading,
     error: userError,
     data: userData,
-  } = useQuery(GET_CURRENT_USER);
+  } = useQuery(GET_CURRENT_USER, {
+    onError: (error) => {
+      // If there's an authentication error, redirect to login
+      if (error.message.includes("Authorization header must be provided")) {
+        router.push("/login");
+      }
+    },
+  });
+
   const {
     loading: questionsLoading,
     error: questionsError,
@@ -73,11 +86,13 @@ export default function QuizPage() {
   const [submitAnswer] = useMutation(SUBMIT_ANSWER);
 
   useEffect(() => {
-    if (userData && userData.me) {
-      setCurrentUser(userData.me);
-    } else if (!userLoading && !userData?.me) {
-      // Redirect to login page if user is not authenticated
-      router.push("/login");
+    if (!userLoading) {
+      if (!userData?.me) {
+        // If user data is loaded but there's no user, redirect to login
+        router.push("/login");
+      } else {
+        setCurrentUser(userData.me);
+      }
     }
   }, [userData, userLoading, router]);
 
@@ -101,11 +116,15 @@ export default function QuizPage() {
   }, [difficulty, currentQuestionIndex]);
 
   if (userLoading || questionsLoading) return <p>Loading...</p>;
-  if (userError) return <p>Error: {userError.message}</p>;
-  if (questionsError) return <p>Error: {questionsError.message}</p>;
+  if (questionsError)
+    return <p>Error loading questions. Please try again later.</p>;
   if (!userData?.me || !questionsData) return null;
 
-  const questions: Question[] = questionsData.questions;
+  const allQuestions: Question[] = questionsData.questions;
+  const questions =
+    questionCount === "infinite"
+      ? allQuestions
+      : allQuestions.slice(0, questionCount);
 
   const handleDifficultySelection = (selectedDifficulty: Difficulty) => {
     setDifficulty(selectedDifficulty);
@@ -116,6 +135,10 @@ export default function QuizPage() {
         ? 30
         : null
     );
+  };
+
+  const handleQuestionCountSelection = (count: QuestionCount) => {
+    setQuestionCount(count);
   };
 
   const handleAnswerSelection = (questionId: string, answer: string) => {
@@ -183,6 +206,21 @@ export default function QuizPage() {
     }
   };
 
+  const handleQuit = () => {
+    setShowQuitConfirmation(true);
+  };
+
+  const confirmQuit = () => {
+    setDifficulty(null);
+    setCurrentQuestionIndex(0);
+    setUserAnswers({});
+    setQuizSubmitted(false);
+    setQuizScore(null);
+    setTimeRemaining(null);
+    setShowHint(false);
+    setShowQuitConfirmation(false);
+  };
+
   const renderDifficultySelection = () => (
     <div className="container mx-auto p-4 max-w-3xl">
       <h1 className="text-4xl font-bold mb-6 text-center text-blue-600">
@@ -190,15 +228,40 @@ export default function QuizPage() {
       </h1>
       <p className="mb-8 text-xl text-center text-gray-700">
         Hello, <span className="font-semibold">{userData.me.username}</span>!
-        Please select a difficulty level to begin:
+        Please select a difficulty level and the number of questions:
       </p>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold mb-4 text-gray-800">
+          Number of Questions: {questionCount}
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {([10, 20, 50, 100, 200, "infinite"] as QuestionCount[]).map(
+            (count) => (
+              <button
+                key={count}
+                onClick={() => handleQuestionCountSelection(count)}
+                className={`py-2 px-4 rounded-lg font-bold text-white transition-transform transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-opacity-50 ${
+                  questionCount === count
+                    ? "ring-4 ring-blue-500 bg-blue-600"
+                    : "bg-purple-500 hover:bg-purple-600 focus:ring-purple-300"
+                }`}
+              >
+                {count === "infinite" ? "Infinite" : count}
+              </button>
+            )
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {(["EASY", "MEDIUM", "HARD"] as Difficulty[]).map((level) => (
           <button
             key={level}
             onClick={() => handleDifficultySelection(level)}
             className={`w-full py-4 px-6 rounded-lg font-bold text-white transition-transform transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-opacity-50 ${
-              level === "EASY"
+              difficulty === level
+                ? "ring-4 ring-blue-500"
+                : level === "EASY"
                 ? "bg-green-500 hover:bg-green-600 focus:ring-green-300"
                 : level === "MEDIUM"
                 ? "bg-yellow-500 hover:bg-yellow-600 focus:ring-yellow-300"
@@ -209,7 +272,7 @@ export default function QuizPage() {
           </button>
         ))}
       </div>
-      <div className="bg-gray-100 rounded-lg p-6 shadow-md">
+      <div className="bg-gray-100 rounded-lg p-6 shadow-md mt-8">
         <h2 className="text-2xl font-bold mb-6 text-gray-800">
           Difficulty Levels:
         </h2>
@@ -296,7 +359,11 @@ export default function QuizPage() {
         )}
         <div className="mb-4">
           <p className="font-semibold">
-            Question {currentQuestionIndex + 1} of {questions.length}
+            Question {currentQuestionIndex + 1} of{" "}
+            {questionCount === "infinite" ? "∞" : questionCount}
+          </p>
+          <p className="text-sm text-gray-600 mb-2">
+            This question is worth {currentQuestion.points} points
           </p>
           {difficulty !== "HARD" && (
             <p className="text-lg mb-2">{currentQuestion.prompt}</p>
@@ -359,11 +426,44 @@ export default function QuizPage() {
             {isLastQuestion ? "Submit Quiz" : "Next"}
           </button>
         </div>
+        <div className="mt-4">
+          <button
+            onClick={handleQuit}
+            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Quit Quiz
+          </button>
+        </div>
       </div>
     );
   };
 
-  if (!difficulty) {
+  const renderQuitConfirmation = () => (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
+      <div className="bg-white p-8 rounded-lg shadow-xl">
+        <h2 className="text-2xl font-bold mb-4">
+          Are you sure you want to quit?
+        </h2>
+        <p className="mb-6">Your progress will be lost if you quit now.</p>
+        <div className="flex justify-end space-x-4">
+          <button
+            onClick={() => setShowQuitConfirmation(false)}
+            className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={confirmQuit}
+            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Quit
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (!difficulty || !questionCount) {
     return renderDifficultySelection();
   }
 
@@ -371,5 +471,10 @@ export default function QuizPage() {
     return renderQuizCompleted();
   }
 
-  return renderQuestion();
+  return (
+    <>
+      {renderQuestion()}
+      {showQuitConfirmation && renderQuitConfirmation()}
+    </>
+  );
 }
