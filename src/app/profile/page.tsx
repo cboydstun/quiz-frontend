@@ -54,7 +54,7 @@ export default function ProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
 
-  const { loading, error, data } = useQuery(GET_USER_PROFILE);
+  const { loading, error, data, refetch } = useQuery(GET_USER_PROFILE);
   const [updateUsername] = useMutation(UPDATE_USERNAME);
   const [updatePassword] = useMutation(UPDATE_PASSWORD);
 
@@ -64,8 +64,24 @@ export default function ProfilePage() {
   const handleUsernameUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const result = await updateUsername({ variables: { username } });
+      const result = await updateUsername({
+        variables: { username },
+        update: (cache, { data }) => {
+          const updatedUser = data?.updateUsername;
+          if (updatedUser) {
+            cache.modify({
+              fields: {
+                me() {
+                  return { ...data.me, ...updatedUser };
+                },
+              },
+            });
+          }
+        },
+      });
       setMessage("Username updated successfully");
+      setUsername(""); // Clear the input field
+      refetch(); // Refetch the user data to update the profile
     } catch (err) {
       setMessage("Failed to update username");
     }
@@ -82,6 +98,9 @@ export default function ProfilePage() {
         variables: { currentPassword, newPassword },
       });
       setMessage("Password updated successfully");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
     } catch (err) {
       setMessage("Failed to update password");
     }
