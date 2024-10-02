@@ -10,6 +10,7 @@ const GET_USER_PROFILE = gql`
       id
       username
       email
+      role
       score
       questionsAnswered
       questionsCorrect
@@ -21,6 +22,8 @@ const GET_USER_PROFILE = gql`
       dailyPoints
       consecutiveLoginDays
       lastLoginDate
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -71,8 +74,8 @@ export default function ProfilePage() {
           if (updatedUser) {
             cache.modify({
               fields: {
-                me() {
-                  return { ...data.me, ...updatedUser };
+                me(existingMe = {}) {
+                  return { ...existingMe, ...updatedUser };
                 },
               },
             });
@@ -97,7 +100,7 @@ export default function ProfilePage() {
       const result = await updatePassword({
         variables: { currentPassword, newPassword },
       });
-      setMessage("Password updated successfully");
+      setMessage(result.data.updatePassword.message);
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -231,6 +234,12 @@ export default function ProfilePage() {
                     </dd>
                   </div>
                   <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt className="text-sm font-medium text-gray-500">Role</dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      {data.me.role}
+                    </dd>
+                  </div>
+                  <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt className="text-sm font-medium text-gray-500">
                       Total Score
                     </dt>
@@ -238,7 +247,7 @@ export default function ProfilePage() {
                       {data.me.score}
                     </dd>
                   </div>
-                  <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt className="text-sm font-medium text-gray-500">
                       Questions Answered
                     </dt>
@@ -246,7 +255,7 @@ export default function ProfilePage() {
                       {data.me.questionsAnswered}
                     </dd>
                   </div>
-                  <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt className="text-sm font-medium text-gray-500">
                       Correct Answers
                     </dt>
@@ -254,7 +263,7 @@ export default function ProfilePage() {
                       {data.me.questionsCorrect}
                     </dd>
                   </div>
-                  <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt className="text-sm font-medium text-gray-500">
                       Incorrect Answers
                     </dt>
@@ -262,7 +271,7 @@ export default function ProfilePage() {
                       {data.me.questionsIncorrect}
                     </dd>
                   </div>
-                  <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt className="text-sm font-medium text-gray-500">
                       Skills
                     </dt>
@@ -270,7 +279,7 @@ export default function ProfilePage() {
                       {data.me.skills.join(", ")}
                     </dd>
                   </div>
-                  <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt className="text-sm font-medium text-gray-500">
                       Lifetime Points
                     </dt>
@@ -278,7 +287,7 @@ export default function ProfilePage() {
                       {data.me.lifetimePoints}
                     </dd>
                   </div>
-                  <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt className="text-sm font-medium text-gray-500">
                       Yearly Points
                     </dt>
@@ -286,7 +295,7 @@ export default function ProfilePage() {
                       {data.me.yearlyPoints}
                     </dd>
                   </div>
-                  <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt className="text-sm font-medium text-gray-500">
                       Monthly Points
                     </dt>
@@ -294,7 +303,7 @@ export default function ProfilePage() {
                       {data.me.monthlyPoints}
                     </dd>
                   </div>
-                  <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt className="text-sm font-medium text-gray-500">
                       Daily Points
                     </dt>
@@ -302,7 +311,7 @@ export default function ProfilePage() {
                       {data.me.dailyPoints}
                     </dd>
                   </div>
-                  <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt className="text-sm font-medium text-gray-500">
                       Login Streak
                     </dt>
@@ -310,12 +319,28 @@ export default function ProfilePage() {
                       {data.me.consecutiveLoginDays} days
                     </dd>
                   </div>
-                  <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt className="text-sm font-medium text-gray-500">
                       Last Login
                     </dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                       {new Date(data.me.lastLoginDate).toLocaleString()}
+                    </dd>
+                  </div>
+                  <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt className="text-sm font-medium text-gray-500">
+                      Account Created
+                    </dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      {new Date(data.me.createdAt).toLocaleString()}
+                    </dd>
+                  </div>
+                  <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt className="text-sm font-medium text-gray-500">
+                      Last Updated
+                    </dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      {new Date(data.me.updatedAt).toLocaleString()}
                     </dd>
                   </div>
                 </dl>
