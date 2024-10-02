@@ -76,9 +76,17 @@ export default function Navbar() {
             FAQ
           </Link>
           {isLoggedIn && (
-            <Link href="/profile" className="text-white hover:text-gray-300">
-              Profile
-            </Link>
+            <>
+              <Link
+                href="/leaderboard"
+                className="text-white hover:text-gray-300"
+              >
+                Leaderboard
+              </Link>
+              <Link href="/profile" className="text-white hover:text-gray-300">
+                Profile
+              </Link>
+            </>
           )}
           <button
             onClick={handleAuthClick}
@@ -129,12 +137,20 @@ export default function Navbar() {
             Flash Cards
           </Link>
           {isLoggedIn && (
-            <Link
-              href="/profile"
-              className="block text-white py-2 px-4 hover:bg-gray-700"
-            >
-              Profile
-            </Link>
+            <>
+              <Link
+                href="/leaderboard"
+                className="block text-white py-2 px-4 hover:bg-gray-700"
+              >
+                Leaderboard
+              </Link>
+              <Link
+                href="/profile"
+                className="block text-white py-2 px-4 hover:bg-gray-700"
+              >
+                Profile
+              </Link>
+            </>
           )}
           <button
             onClick={handleAuthClick}
