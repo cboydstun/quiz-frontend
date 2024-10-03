@@ -1,3 +1,5 @@
+// src/app/login/page.tsx
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -77,11 +79,19 @@ export default function LoginPage() {
     }
 
     try {
-      const { data } = await login({ variables: { email, password } });
-      await authLogin(data.login.token);
-      handleAuthenticationSuccess(data.login);
+      const result = await login({ variables: { email, password } });
+      if (result.data && result.data.login) {
+        await authLogin(result.data.login.token);
+        handleAuthenticationSuccess(result.data.login);
+      } else {
+        setError("Login failed. Please check your credentials and try again.");
+      }
     } catch (err: any) {
-      setError(err.message || "An error occurred. Please try again.");
+      if (err.graphQLErrors && err.graphQLErrors.length > 0) {
+        setError(err.graphQLErrors[0].message);
+      } else {
+        setError(err.message || "An error occurred. Please try again.");
+      }
       console.error(err);
     }
   };

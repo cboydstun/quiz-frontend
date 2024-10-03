@@ -1,3 +1,5 @@
+// src/components/Navbar.tsx
+
 "use client";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -42,6 +44,9 @@ export default function Navbar() {
     }
   };
 
+  const canAccessManagement =
+    user && ["EDITOR", "ADMIN", "SUPER_ADMIN"].includes(user.role);
+
   if (loading) {
     return (
       <nav className="bg-gray-800 p-4">
@@ -72,9 +77,6 @@ export default function Navbar() {
           >
             Study Materials
           </Link>
-          <Link href="/faq" className="text-white hover:text-gray-300">
-            FAQ
-          </Link>
           {isLoggedIn && (
             <>
               <Link
@@ -83,6 +85,14 @@ export default function Navbar() {
               >
                 Leaderboard
               </Link>
+              {canAccessManagement && (
+                <Link
+                  href="/management"
+                  className="text-white hover:text-gray-300"
+                >
+                  Management
+                </Link>
+              )}
               <Link href="/profile" className="text-white hover:text-gray-300">
                 Profile
               </Link>
@@ -144,6 +154,14 @@ export default function Navbar() {
               >
                 Leaderboard
               </Link>
+              {canAccessManagement && (
+                <Link
+                  href="/management"
+                  className="block text-white py-2 px-4 hover:bg-gray-700"
+                >
+                  Management
+                </Link>
+              )}
               <Link
                 href="/profile"
                 className="block text-white py-2 px-4 hover:bg-gray-700"
