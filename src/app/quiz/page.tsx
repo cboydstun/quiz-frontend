@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { gql, useQuery, useMutation } from "@apollo/client";
 
@@ -99,78 +99,15 @@ export default function QuizPage() {
 
   console.log("currentUser", currentUser);
 
-  const handleNextQuestion = () => {
-    const currentQuestionId = questions[currentQuestionIndex].id;
-    if (userAnswers[currentQuestionId]) {
-      if (currentQuestionIndex < questions.length - 1) {
-        setCurrentQuestionIndex((prev) => prev + 1);
-        setShowHint(false);
-        resetTimer();
-      } else {
-        handleSubmitQuiz();
-      }
-    } else {
-      alert("Please select an answer before moving to the next question.");
+  const questions: Question[] = questionsData?.questions || [];
+
+  const resetTimer = useCallback(() => {
+    if (difficulty === "MEDIUM") {
+      setTimeRemaining(60);
+    } else if (difficulty === "HARD") {
+      setTimeRemaining(30);
     }
-  };
-
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (difficulty === "MEDIUM" || difficulty === "HARD") {
-      const time = difficulty === "MEDIUM" ? 60 : 30;
-      setTimeRemaining(time);
-      timer = setInterval(() => {
-        setTimeRemaining((prevTime) => {
-          if (prevTime === 1) {
-            clearInterval(timer);
-            handleNextQuestion();
-            return null;
-          }
-          return prevTime ? prevTime - 1 : null;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [difficulty, currentQuestionIndex, handleNextQuestion]);
-
-  if (userLoading || questionsLoading)
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  if (questionsError)
-    return (
-      <p className="text-center text-red-600 text-xl mt-8">
-        Error loading questions. Please try again later.
-      </p>
-    );
-  if (!userData?.me || !questionsData) return null;
-
-  const allQuestions: Question[] = questionsData.questions;
-  const questions =
-    questionCount === "infinite"
-      ? allQuestions
-      : allQuestions.slice(0, questionCount);
-
-  const handleDifficultySelection = (selectedDifficulty: Difficulty) => {
-    setDifficulty(selectedDifficulty);
-    setTimeRemaining(
-      selectedDifficulty === "MEDIUM"
-        ? 60
-        : selectedDifficulty === "HARD"
-        ? 30
-        : null
-    );
-  };
-
-  const handleQuestionCountSelection = (count: QuestionCount) => {
-    setQuestionCount(count);
-  };
-
-  const handleAnswerSelection = (questionId: string, answer: string) => {
-    setUserAnswers((prev) => ({ ...prev, [questionId]: answer }));
-  };
+  }, [difficulty]);
 
   const handleSubmitQuiz = async () => {
     let score = 0;
@@ -194,19 +131,91 @@ export default function QuizPage() {
     }
   };
 
+  const handleNextQuestion = useCallback(() => {
+    if (questions.length === 0) return;
+
+    const currentQuestionId = questions[currentQuestionIndex].id;
+    if (userAnswers[currentQuestionId]) {
+      if (currentQuestionIndex < questions.length - 1) {
+        setCurrentQuestionIndex((prev) => prev + 1);
+        setShowHint(false);
+        resetTimer();
+      } else {
+        handleSubmitQuiz();
+      }
+    } else {
+      alert("Please select an answer before moving to the next question.");
+    }
+  }, [
+    currentQuestionIndex,
+    questions,
+    userAnswers,
+    resetTimer,
+    handleSubmitQuiz,
+  ]);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+
+    if (
+      (difficulty === "MEDIUM" || difficulty === "HARD") &&
+      timeRemaining !== null
+    ) {
+      timer = setInterval(() => {
+        setTimeRemaining((prevTime) => {
+          if (prevTime === null || prevTime <= 1) {
+            if (timer) clearInterval(timer);
+            handleNextQuestion();
+            return null;
+          }
+          return prevTime - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [difficulty, timeRemaining, handleNextQuestion]);
+
+  if (userLoading || questionsLoading)
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  if (questionsError)
+    return (
+      <p className="text-center text-red-600 text-xl mt-8">
+        Error loading questions. Please try again later.
+      </p>
+    );
+  if (!userData?.me || questions.length === 0) return null;
+
+  const handleDifficultySelection = (selectedDifficulty: Difficulty) => {
+    setDifficulty(selectedDifficulty);
+    if (selectedDifficulty === "MEDIUM") {
+      setTimeRemaining(60);
+    } else if (selectedDifficulty === "HARD") {
+      setTimeRemaining(30);
+    } else {
+      setTimeRemaining(null);
+    }
+  };
+
+  const handleQuestionCountSelection = (count: QuestionCount) => {
+    setQuestionCount(count);
+  };
+
+  const handleAnswerSelection = (questionId: string, answer: string) => {
+    setUserAnswers((prev) => ({ ...prev, [questionId]: answer }));
+  };
+
   const handleSkipQuestion = () => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
       setShowHint(false);
       resetTimer();
-    }
-  };
-
-  const resetTimer = () => {
-    if (difficulty === "MEDIUM") {
-      setTimeRemaining(60);
-    } else if (difficulty === "HARD") {
-      setTimeRemaining(30);
     }
   };
 
@@ -367,6 +376,8 @@ export default function QuizPage() {
   );
 
   const renderQuestion = () => {
+    if (questions.length === 0) return null;
+
     const currentQuestion = questions[currentQuestionIndex];
     const isAnswered = userAnswers[currentQuestion.id] !== undefined;
     const isLastQuestion = currentQuestionIndex === questions.length - 1;
