@@ -61,8 +61,22 @@ export default function ProfilePage() {
   const [updateUsername] = useMutation(UPDATE_USERNAME);
   const [updatePassword] = useMutation(UPDATE_PASSWORD);
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error.message}</p>;
+  if (loading)
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  if (error)
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100">
+        <div className="bg-white p-8 rounded-lg shadow-xl">
+          <p className="text-center text-xl text-red-500">
+            Error: {error.message}
+          </p>
+        </div>
+      </div>
+    );
 
   const handleUsernameUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,8 +97,8 @@ export default function ProfilePage() {
         },
       });
       setMessage("Username updated successfully");
-      setUsername(""); // Clear the input field
-      refetch(); // Refetch the user data to update the profile
+      setUsername("");
+      refetch();
     } catch (err) {
       setMessage("Failed to update username");
     }
@@ -110,243 +124,189 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Profile Management</h1>
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100 py-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 className="text-4xl font-bold mb-8 text-center text-blue-600">
+          Profile Management
+        </h1>
 
-      {message && (
-        <div
-          className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4"
-          role="alert"
-        >
-          <p>{message}</p>
-        </div>
-      )}
+        {message && (
+          <div
+            className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-8 rounded-lg transition-all duration-300 transform hover:scale-105"
+            role="alert"
+          >
+            <p>{message}</p>
+          </div>
+        )}
 
-      <div className="grid md:grid-cols-2 gap-8">
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Update Profile</h2>
-          <form onSubmit={handleUsernameUpdate} className="mb-6">
-            <div className="mb-4">
-              <label
-                htmlFor="username"
-                className="block text-sm font-medium text-gray-700"
-              >
-                New Username
-              </label>
-              <input
-                type="text"
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            >
-              Update Username
-            </button>
-          </form>
-
-          <form onSubmit={handlePasswordUpdate}>
-            <div className="mb-4">
-              <label
-                htmlFor="currentPassword"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Current Password
-              </label>
-              <input
-                type="password"
-                id="currentPassword"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                required
-              />
-            </div>
-            <div className="mb-4">
-              <label
-                htmlFor="newPassword"
-                className="block text-sm font-medium text-gray-700"
-              >
-                New Password
-              </label>
-              <input
-                type="password"
-                id="newPassword"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                required
-              />
-            </div>
-            <div className="mb-4">
-              <label
-                htmlFor="confirmPassword"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Confirm New Password
-              </label>
-              <input
-                type="password"
-                id="confirmPassword"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-            >
-              Update Password
-            </button>
-          </form>
-        </div>
-
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Your Progress</h2>
-          {data && data.me && (
-            <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-              <div className="px-4 py-5 sm:px-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900">
-                  User Statistics
-                </h3>
+        <div className="grid md:grid-cols-2 gap-8">
+          <div className="bg-white shadow-lg rounded-lg p-6 transition-all duration-300 transform hover:scale-105">
+            <h2 className="text-2xl font-semibold mb-6 text-blue-600">
+              Update Profile
+            </h2>
+            <form onSubmit={handleUsernameUpdate} className="mb-8">
+              <div className="mb-4">
+                <label
+                  htmlFor="username"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  New Username
+                </label>
+                <input
+                  type="text"
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
               </div>
-              <div className="border-t border-gray-200">
-                <dl>
-                  <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt className="text-sm font-medium text-gray-500">
-                      Username
-                    </dt>
-                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                      {data.me.username}
-                    </dd>
-                  </div>
-                  <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt className="text-sm font-medium text-gray-500">Email</dt>
-                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                      {data.me.email}
-                    </dd>
-                  </div>
-                  <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt className="text-sm font-medium text-gray-500">Role</dt>
-                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                      {data.me.role}
-                    </dd>
-                  </div>
-                  <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt className="text-sm font-medium text-gray-500">
+              <button
+                type="submit"
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition-colors duration-300"
+              >
+                Update Username
+              </button>
+            </form>
+
+            <form onSubmit={handlePasswordUpdate}>
+              <div className="mb-4">
+                <label
+                  htmlFor="currentPassword"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  id="currentPassword"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label
+                  htmlFor="newPassword"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  id="newPassword"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label
+                  htmlFor="confirmPassword"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md transition-colors duration-300"
+              >
+                Update Password
+              </button>
+            </form>
+          </div>
+
+          <div className="bg-white shadow-lg rounded-lg p-6 transition-all duration-300 transform hover:scale-105">
+            <h2 className="text-2xl font-semibold mb-6 text-blue-600">
+              Your Progress
+            </h2>
+            {data && data.me && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-blue-100 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-2 text-blue-600">
                       Total Score
-                    </dt>
-                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    </h3>
+                    <p className="text-3xl font-bold text-blue-700">
                       {data.me.score}
-                    </dd>
+                    </p>
                   </div>
-                  <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt className="text-sm font-medium text-gray-500">
+                  <div className="bg-green-100 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-2 text-green-600">
                       Questions Answered
-                    </dt>
-                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    </h3>
+                    <p className="text-3xl font-bold text-green-700">
                       {data.me.questionsAnswered}
-                    </dd>
+                    </p>
                   </div>
-                  <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt className="text-sm font-medium text-gray-500">
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-purple-100 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-2 text-purple-600">
                       Correct Answers
-                    </dt>
-                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    </h3>
+                    <p className="text-3xl font-bold text-purple-700">
                       {data.me.questionsCorrect}
-                    </dd>
+                    </p>
                   </div>
-                  <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt className="text-sm font-medium text-gray-500">
+                  <div className="bg-red-100 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-2 text-red-600">
                       Incorrect Answers
-                    </dt>
-                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    </h3>
+                    <p className="text-3xl font-bold text-red-700">
                       {data.me.questionsIncorrect}
-                    </dd>
+                    </p>
                   </div>
-                  <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt className="text-sm font-medium text-gray-500">
-                      Skills
-                    </dt>
-                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                      {data.me.skills.join(", ")}
-                    </dd>
-                  </div>
-                  <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt className="text-sm font-medium text-gray-500">
-                      Lifetime Points
-                    </dt>
-                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                      {data.me.lifetimePoints}
-                    </dd>
-                  </div>
-                  <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt className="text-sm font-medium text-gray-500">
-                      Yearly Points
-                    </dt>
-                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                      {data.me.yearlyPoints}
-                    </dd>
-                  </div>
-                  <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt className="text-sm font-medium text-gray-500">
-                      Monthly Points
-                    </dt>
-                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                      {data.me.monthlyPoints}
-                    </dd>
-                  </div>
-                  <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt className="text-sm font-medium text-gray-500">
-                      Daily Points
-                    </dt>
-                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                      {data.me.dailyPoints}
-                    </dd>
-                  </div>
-                  <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt className="text-sm font-medium text-gray-500">
+                </div>
+                <div className="bg-yellow-100 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-2 text-yellow-600">
+                    Skills
+                  </h3>
+                  <p className="text-gray-700">{data.me.skills.join(", ")}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-indigo-100 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-2 text-indigo-600">
                       Login Streak
-                    </dt>
-                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    </h3>
+                    <p className="text-3xl font-bold text-indigo-700">
                       {data.me.consecutiveLoginDays} days
-                    </dd>
+                    </p>
                   </div>
-                  <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt className="text-sm font-medium text-gray-500">
+                  <div className="bg-pink-100 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-2 text-pink-600">
                       Last Login
-                    </dt>
-                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    </h3>
+                    <p className="text-sm text-pink-700">
                       {new Date(data.me.lastLoginDate).toLocaleString()}
-                    </dd>
+                    </p>
                   </div>
-                  <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt className="text-sm font-medium text-gray-500">
-                      Account Created
-                    </dt>
-                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                      {new Date(data.me.createdAt).toLocaleString()}
-                    </dd>
-                  </div>
-                  <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt className="text-sm font-medium text-gray-500">
-                      Last Updated
-                    </dt>
-                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                      {new Date(data.me.updatedAt).toLocaleString()}
-                    </dd>
-                  </div>
-                </dl>
+                </div>
+                <div className="bg-gray-100 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-2 text-gray-600">
+                    Account Details
+                  </h3>
+                  <p className="text-sm text-gray-700">
+                    Created: {new Date(data.me.createdAt).toLocaleString()}
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    Last Updated: {new Date(data.me.updatedAt).toLocaleString()}
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>

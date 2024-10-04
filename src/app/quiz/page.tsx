@@ -71,7 +71,6 @@ export default function QuizPage() {
     data: userData,
   } = useQuery(GET_CURRENT_USER, {
     onError: (error) => {
-      // If there's an authentication error, redirect to login
       if (error.message.includes("Authorization header must be provided")) {
         router.push("/login");
       }
@@ -88,7 +87,6 @@ export default function QuizPage() {
   useEffect(() => {
     if (!userLoading) {
       if (!userData?.me) {
-        // If user data is loaded but there's no user, redirect to login
         router.push("/login");
       } else {
         setCurrentUser(userData.me);
@@ -115,9 +113,18 @@ export default function QuizPage() {
     return () => clearInterval(timer);
   }, [difficulty, currentQuestionIndex]);
 
-  if (userLoading || questionsLoading) return <p>Loading...</p>;
+  if (userLoading || questionsLoading)
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
   if (questionsError)
-    return <p>Error loading questions. Please try again later.</p>;
+    return (
+      <p className="text-center text-red-600 text-xl mt-8">
+        Error loading questions. Please try again later.
+      </p>
+    );
   if (!userData?.me || !questionsData) return null;
 
   const allQuestions: Question[] = questionsData.questions;
@@ -240,7 +247,7 @@ export default function QuizPage() {
               <button
                 key={count}
                 onClick={() => handleQuestionCountSelection(count)}
-                className={`py-2 px-4 rounded-lg font-bold text-white transition-transform transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-opacity-50 ${
+                className={`py-2 px-4 rounded-lg font-bold text-white transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-opacity-50 ${
                   questionCount === count
                     ? "ring-4 ring-blue-500 bg-blue-600"
                     : "bg-purple-500 hover:bg-purple-600 focus:ring-purple-300"
@@ -258,7 +265,7 @@ export default function QuizPage() {
           <button
             key={level}
             onClick={() => handleDifficultySelection(level)}
-            className={`w-full py-4 px-6 rounded-lg font-bold text-white transition-transform transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-opacity-50 ${
+            className={`w-full py-4 px-6 rounded-lg font-bold text-white transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-opacity-50 ${
               difficulty === level
                 ? "ring-4 ring-blue-500"
                 : level === "EASY"
@@ -272,7 +279,7 @@ export default function QuizPage() {
           </button>
         ))}
       </div>
-      <div className="bg-gray-100 rounded-lg p-6 shadow-md mt-8">
+      <div className="bg-white rounded-lg p-6 shadow-md mt-8">
         <h2 className="text-2xl font-bold mb-6 text-gray-800">
           Difficulty Levels:
         </h2>
@@ -302,7 +309,7 @@ export default function QuizPage() {
           ].map(({ level, color, bgColor, description }) => (
             <div
               key={level}
-              className={`${bgColor} rounded-lg p-4 flex flex-col`}
+              className={`${bgColor} rounded-lg p-4 flex flex-col transition-all duration-300 transform hover:scale-105`}
             >
               <span className={`font-bold ${color} text-lg mb-2`}>{level}</span>
               <span className="text-gray-700 text-sm">{description}</span>
@@ -314,30 +321,43 @@ export default function QuizPage() {
   );
 
   const renderQuizCompleted = () => (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Quiz Completed</h1>
-      <p className="mb-4">
-        Thank you for completing the {difficulty} quiz, {userData.me.username}!
-      </p>
-      {quizScore && (
-        <p className="text-lg">
-          Your score: {quizScore.score} out of {quizScore.totalQuestions}
+    <div className="container mx-auto p-4 max-w-3xl">
+      <div className="bg-white rounded-lg p-8 shadow-md">
+        <h1 className="text-3xl font-bold mb-6 text-center text-blue-600">
+          Quiz Completed
+        </h1>
+        <p className="mb-6 text-xl text-center text-gray-700">
+          Thank you for completing the {difficulty} quiz, {userData.me.username}
+          !
         </p>
-      )}
-      <button
-        onClick={() => {
-          setDifficulty(null);
-          setCurrentQuestionIndex(0);
-          setUserAnswers({});
-          setQuizSubmitted(false);
-          setQuizScore(null);
-          setTimeRemaining(null);
-          setShowHint(false);
-        }}
-        className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-      >
-        Take Another Quiz
-      </button>
+        {quizScore && (
+          <div className="text-center mb-8">
+            <p className="text-2xl font-bold text-green-600">
+              Your score: {quizScore.score} out of {quizScore.totalQuestions}
+            </p>
+            <p className="text-lg text-gray-600">
+              ({((quizScore.score / quizScore.totalQuestions) * 100).toFixed(2)}
+              %)
+            </p>
+          </div>
+        )}
+        <div className="flex justify-center">
+          <button
+            onClick={() => {
+              setDifficulty(null);
+              setCurrentQuestionIndex(0);
+              setUserAnswers({});
+              setQuizSubmitted(false);
+              setQuizScore(null);
+              setTimeRemaining(null);
+              setShowHint(false);
+            }}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105"
+          >
+            Take Another Quiz
+          </button>
+        </div>
+      </div>
     </div>
   );
 
@@ -347,92 +367,105 @@ export default function QuizPage() {
     const isLastQuestion = currentQuestionIndex === questions.length - 1;
 
     return (
-      <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-4">
-          Drone Pilot Quiz - {difficulty} Level
-        </h1>
-        <p className="mb-4">Welcome, {userData.me.username}!</p>
-        {timeRemaining !== null && (
-          <p className="text-lg font-bold mb-4">
-            Time Remaining: {timeRemaining} seconds
+      <div className="container mx-auto p-4 max-w-3xl">
+        <div className="bg-white rounded-lg p-8 shadow-md">
+          <h1 className="text-3xl font-bold mb-6 text-center text-blue-600">
+            Drone Pilot Quiz - {difficulty} Level
+          </h1>
+          <p className="mb-6 text-xl text-center text-gray-700">
+            Welcome, {userData.me.username}!
           </p>
-        )}
-        <div className="mb-4">
-          <p className="font-semibold">
-            Question {currentQuestionIndex + 1} of{" "}
-            {questionCount === "infinite" ? "∞" : questionCount}
-          </p>
-          <p className="text-sm text-gray-600 mb-2">
-            This question is worth {currentQuestion.points} points
-          </p>
-          {difficulty !== "HARD" && (
-            <p className="text-lg mb-2">{currentQuestion.prompt}</p>
+          {timeRemaining !== null && (
+            <p className="text-2xl font-bold mb-6 text-center text-red-600">
+              Time Remaining: {timeRemaining} seconds
+            </p>
           )}
-          <p className="text-xl mb-4">{currentQuestion.questionText}</p>
-          <div className="space-y-2">
-            {currentQuestion.answers.map((answer, index) => (
-              <label key={index} className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  name={`question-${currentQuestion.id}`}
-                  value={answer}
-                  checked={userAnswers[currentQuestion.id] === answer}
-                  onChange={() =>
-                    handleAnswerSelection(currentQuestion.id, answer)
-                  }
-                  className="form-radio"
-                />
-                <span>{answer}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-        {difficulty !== "HARD" && currentQuestion.hint && (
-          <div className="mb-4">
-            <button
-              onClick={() => setShowHint(!showHint)}
-              className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded"
-            >
-              {showHint ? "Hide Hint" : "Show Hint"}
-            </button>
-            {showHint && (
-              <p className="mt-2 text-gray-600">{currentQuestion.hint}</p>
+          <div className="mb-8">
+            <p className="font-semibold text-lg mb-2">
+              Question {currentQuestionIndex + 1} of{" "}
+              {questionCount === "infinite" ? "∞" : questionCount}
+            </p>
+            <p className="text-sm text-gray-600 mb-4">
+              This question is worth {currentQuestion.points} points
+            </p>
+            {difficulty !== "HARD" && (
+              <p className="text-lg mb-4 text-gray-700">
+                {currentQuestion.prompt}
+              </p>
             )}
+            <p className="text-xl mb-6 font-semibold">
+              {currentQuestion.questionText}
+            </p>
+            <div className="space-y-4">
+              {currentQuestion.answers.map((answer, index) => (
+                <label
+                  key={index}
+                  className="flex items-center space-x-3 p-3 rounded-lg transition-all duration-200 hover:bg-gray-100"
+                >
+                  <input
+                    type="radio"
+                    name={`question-${currentQuestion.id}`}
+                    value={answer}
+                    checked={userAnswers[currentQuestion.id] === answer}
+                    onChange={() =>
+                      handleAnswerSelection(currentQuestion.id, answer)
+                    }
+                    className="form-radio h-5 w-5 text-blue-600"
+                  />
+                  <span className="text-lg">{answer}</span>
+                </label>
+              ))}
+            </div>
           </div>
-        )}
-        <div className="flex justify-between items-center">
-          <button
-            onClick={handlePreviousQuestion}
-            disabled={currentQuestionIndex === 0}
-            className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded disabled:opacity-50"
-          >
-            Previous
-          </button>
-          <button
-            onClick={handleSkipQuestion}
-            className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded"
-          >
-            Skip
-          </button>
-          <button
-            onClick={handleNextQuestion}
-            disabled={!isAnswered}
-            className={`font-bold py-2 px-4 rounded ${
-              isAnswered
-                ? "bg-blue-500 hover:bg-blue-700 text-white"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-            }`}
-          >
-            {isLastQuestion ? "Submit Quiz" : "Next"}
-          </button>
-        </div>
-        <div className="mt-4">
-          <button
-            onClick={handleQuit}
-            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Quit Quiz
-          </button>
+          {difficulty !== "HARD" && currentQuestion.hint && (
+            <div className="mb-6">
+              <button
+                onClick={() => setShowHint(!showHint)}
+                className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-full transition-all duration-300 transform hover:scale-105"
+              >
+                {showHint ? "Hide Hint" : "Show Hint"}
+              </button>
+              {showHint && (
+                <p className="mt-4 p-4 bg-yellow-100 rounded-lg text-gray-700">
+                  {currentQuestion.hint}
+                </p>
+              )}
+            </div>
+          )}
+          <div className="flex justify-between items-center">
+            <button
+              onClick={handlePreviousQuestion}
+              disabled={currentQuestionIndex === 0}
+              className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-full transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <button
+              onClick={handleSkipQuestion}
+              className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-full transition-all duration-300 transform hover:scale-105"
+            >
+              Skip
+            </button>
+            <button
+              onClick={handleNextQuestion}
+              disabled={!isAnswered}
+              className={`font-bold py-2 px-4 rounded-full transition-all duration-300 transform hover:scale-105 ${
+                isAnswered
+                  ? "bg-blue-500 hover:bg-blue-600 text-white"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
+            >
+              {isLastQuestion ? "Submit Quiz" : "Next"}
+            </button>
+          </div>
+          <div className="mt-6 text-center">
+            <button
+              onClick={handleQuit}
+              className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full transition-all duration-300 transform hover:scale-105"
+            >
+              Quit Quiz
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -441,20 +474,22 @@ export default function QuizPage() {
   const renderQuitConfirmation = () => (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
       <div className="bg-white p-8 rounded-lg shadow-xl">
-        <h2 className="text-2xl font-bold mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-gray-800">
           Are you sure you want to quit?
         </h2>
-        <p className="mb-6">Your progress will be lost if you quit now.</p>
+        <p className="mb-6 text-gray-600">
+          Your progress will be lost if you quit now.
+        </p>
         <div className="flex justify-end space-x-4">
           <button
             onClick={() => setShowQuitConfirmation(false)}
-            className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
+            className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-full transition-all duration-300"
           >
             Cancel
           </button>
           <button
             onClick={confirmQuit}
-            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+            className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full transition-all duration-300"
           >
             Quit
           </button>
@@ -463,18 +498,18 @@ export default function QuizPage() {
     </div>
   );
 
-  if (!difficulty || !questionCount) {
-    return renderDifficultySelection();
-  }
-
-  if (quizSubmitted) {
-    return renderQuizCompleted();
-  }
-
   return (
-    <>
-      {renderQuestion()}
-      {showQuitConfirmation && renderQuitConfirmation()}
-    </>
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100 py-12">
+      {!difficulty || !questionCount ? (
+        renderDifficultySelection()
+      ) : quizSubmitted ? (
+        renderQuizCompleted()
+      ) : (
+        <>
+          {renderQuestion()}
+          {showQuitConfirmation && renderQuitConfirmation()}
+        </>
+      )}
+    </div>
   );
 }

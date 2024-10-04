@@ -49,66 +49,53 @@ export default function Navbar() {
 
   if (loading) {
     return (
-      <nav className="bg-gray-800 p-4">
-        <div className="container mx-auto">Loading...</div>
+      <nav className="bg-gradient-to-r from-blue-600 to-purple-600 p-4">
+        <div className="container mx-auto text-white">Loading...</div>
       </nav>
     );
   }
 
   return (
-    <nav className="bg-gray-800 p-4">
+    <nav className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 shadow-md z-10">
       <div className="container mx-auto flex justify-between items-center">
-        <Link href="/" className="text-white text-xl font-bold">
+        <Link href="/" className="text-white text-2xl font-bold">
           Drone Pilot Quiz
         </Link>
-        <div className="hidden md:flex space-x-4">
-          <Link href="/" className="text-white hover:text-gray-300">
-            Home
-          </Link>
-          <Link href="/quiz" className="text-white hover:text-gray-300">
-            Start Quiz
-          </Link>
-          <Link href="/flash-cards" className="text-white hover:text-gray-300">
-            Flash Cards
-          </Link>
-          <Link
-            href="/study-materials"
-            className="text-white hover:text-gray-300"
-          >
-            Study Materials
-          </Link>
-          {isLoggedIn && (
-            <>
-              <Link
-                href="/leaderboard"
-                className="text-white hover:text-gray-300"
-              >
-                Leaderboard
-              </Link>
-              {canAccessManagement && (
-                <Link
-                  href="/management"
-                  className="text-white hover:text-gray-300"
-                >
-                  Management
-                </Link>
-              )}
-              <Link href="/profile" className="text-white hover:text-gray-300">
-                Profile
-              </Link>
-            </>
-          )}
+        <div className="hidden md:flex space-x-4 items-center">
+          {[
+            { href: "/", label: "Home" },
+            { href: "/quiz", label: "Start Quiz" },
+            { href: "/flash-cards", label: "Flash Cards" },
+            { href: "/study-materials", label: "Study Materials" },
+            ...(isLoggedIn
+              ? [
+                  { href: "/leaderboard", label: "Leaderboard" },
+                  ...(canAccessManagement
+                    ? [{ href: "/management", label: "Management" }]
+                    : []),
+                  { href: "/profile", label: "Profile" },
+                ]
+              : []),
+          ].map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="text-white hover:text-gray-200 transition-colors duration-200 ease-in-out"
+            >
+              {link.label}
+            </Link>
+          ))}
           {!isLoggedIn && (
             <Link
               href="/register"
-              className="text-white hover:text-gray-300 bg-green-600 hover:bg-green-700 px-3 py-1 rounded transition-colors duration-300"
+              className="text-white bg-green-500 hover:bg-green-600 px-4 py-2 rounded-full transition-colors duration-300 shadow-md hover:shadow-lg"
             >
               Register
             </Link>
           )}
           <button
             onClick={handleAuthClick}
-            className="text-white hover:text-gray-300 bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded transition-colors duration-300"
+            className="text-blue-600 bg-white hover:bg-gray-100 px-4 py-2 rounded-full transition-colors duration-300 shadow-md hover:shadow-lg"
           >
             {isLoggedIn ? "Logout" : "Login"}
           </button>
@@ -135,73 +122,50 @@ export default function Navbar() {
         </div>
       </div>
       {isMenuOpen && (
-        <div className="md:hidden">
-          <Link
-            href="/"
-            className="block text-white py-2 px-4 hover:bg-gray-700"
-          >
-            Home
-          </Link>
-          <Link
-            href="/quiz"
-            className="block text-white py-2 px-4 hover:bg-gray-700"
-          >
-            Start Quiz
-          </Link>
-          <Link
-            href="/flash-cards"
-            className="block text-white py-2 px-4 hover:bg-gray-700"
-          >
-            Flash Cards
-          </Link>
-          <Link
-            href="/study-materials"
-            className="block text-white py-2 px-4 hover:bg-gray-700"
-          >
-            Study Materials
-          </Link>
-          {isLoggedIn && (
-            <>
-              <Link
-                href="/leaderboard"
-                className="block text-white py-2 px-4 hover:bg-gray-700"
-              >
-                Leaderboard
-              </Link>
-              {canAccessManagement && (
-                <Link
-                  href="/management"
-                  className="block text-white py-2 px-4 hover:bg-gray-700"
-                >
-                  Management
-                </Link>
-              )}
-              <Link
-                href="/profile"
-                className="block text-white py-2 px-4 hover:bg-gray-700"
-              >
-                Profile
-              </Link>
-            </>
-          )}
+        <div className="md:hidden mt-4 bg-white rounded-lg shadow-lg overflow-hidden">
+          {[
+            { href: "/", label: "Home" },
+            { href: "/quiz", label: "Start Quiz" },
+            { href: "/flash-cards", label: "Flash Cards" },
+            { href: "/study-materials", label: "Study Materials" },
+            ...(isLoggedIn
+              ? [
+                  { href: "/leaderboard", label: "Leaderboard" },
+                  ...(canAccessManagement
+                    ? [{ href: "/management", label: "Management" }]
+                    : []),
+                  { href: "/profile", label: "Profile" },
+                ]
+              : []),
+          ].map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="block text-gray-800 py-2 px-4 hover:bg-gray-100 transition-colors duration-200 ease-in-out"
+            >
+              {link.label}
+            </Link>
+          ))}
           {!isLoggedIn && (
             <Link
               href="/register"
-              className="block text-white py-2 px-4 hover:bg-gray-700"
+              className="block text-center text-white bg-green-500 hover:bg-green-600 py-2 px-4 transition-colors duration-300"
             >
               Register
             </Link>
           )}
           <button
             onClick={handleAuthClick}
-            className="block text-white py-2 px-4 hover:bg-gray-700 w-full text-left"
+            className="w-full text-center text-blue-600 bg-gray-100 hover:bg-gray-200 py-2 px-4 transition-colors duration-300"
           >
             {isLoggedIn ? "Logout" : "Login"}
           </button>
         </div>
       )}
       {error && (
-        <div className="bg-red-500 text-white p-2 text-center">{error}</div>
+        <div className="bg-red-500 text-white p-2 text-center mt-4 rounded-lg">
+          {error}
+        </div>
       )}
     </nav>
   );

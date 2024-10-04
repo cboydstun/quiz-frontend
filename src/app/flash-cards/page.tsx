@@ -111,32 +111,107 @@ export default function FlashCardsPage() {
   };
 
   if (authLoading || idsLoading)
-    return <p className="text-center text-xl mt-8">Loading...</p>;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
   if (idsError)
     return (
-      <p className="text-center text-xl mt-8 text-red-500">
-        Error loading question IDs: {idsError.message}
-      </p>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100">
+        <div className="bg-white p-8 rounded-lg shadow-xl">
+          <p className="text-center text-xl text-red-500">
+            Error loading question IDs: {idsError.message}
+          </p>
+        </div>
+      </div>
     );
   if (!user) return null; // This prevents any flash of content before redirect
   if (questionIds.length === 0)
     return (
-      <p className="text-center text-xl mt-8">No flash cards available.</p>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100">
+        <div className="bg-white p-8 rounded-lg shadow-xl">
+          <p className="text-center text-xl">No flash cards available.</p>
+        </div>
+      </div>
     );
 
   const currentCard = flashCards[currentCardIndex];
 
   if (questionLoading || !currentCard)
-    return <p className="text-center text-xl mt-8">Loading question...</p>;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
   if (questionError)
     return (
-      <p className="text-center text-xl mt-8 text-red-500">
-        Error loading question: {questionError.message}
-      </p>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100">
+        <div className="bg-white p-8 rounded-lg shadow-xl">
+          <p className="text-center text-xl text-red-500">
+            Error loading question: {questionError.message}
+          </p>
+        </div>
+      </div>
     );
 
   return (
-    <div className="container mx-auto p-4 max-w-2xl">
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100 py-12">
+      <div className="container mx-auto p-4 max-w-2xl">
+        <h1 className="text-4xl font-bold mb-8 text-center text-blue-600">
+          Drone Pilot Flash Cards
+        </h1>
+        <p className="text-center mb-8 text-xl text-gray-700">
+          Welcome, {user.username}!
+        </p>
+
+        <div
+          className={`flip-card w-full h-80 mb-8 cursor-pointer transition-transform duration-300 transform hover:scale-105 ${
+            isFlipped ? "flipped" : ""
+          }`}
+          onClick={handleCardClick}
+        >
+          <div className="flip-card-inner relative w-full h-full transition-transform duration-500 transform-style-preserve-3d">
+            <div className="flip-card-front absolute w-full h-full bg-white border-2 border-blue-300 rounded-lg shadow-lg p-6 flex flex-col items-center justify-center backface-hidden">
+              <p className="text-2xl text-center text-gray-800">
+                {currentCard.questionText}
+              </p>
+            </div>
+            <div className="flip-card-back absolute w-full h-full bg-blue-100 border-2 border-blue-300 rounded-lg shadow-lg p-6 flex flex-col items-center justify-center backface-hidden transform rotate-y-180">
+              {renderCardBack(currentCard).map((answer, index) => (
+                <p
+                  key={index}
+                  className="text-xl text-center mb-2 text-gray-800"
+                >
+                  {answer}
+                </p>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-between mt-8">
+          <button
+            onClick={handlePreviousCard}
+            disabled={currentCardIndex === 0}
+            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Previous Card
+          </button>
+          <button
+            onClick={handleNextCard}
+            disabled={currentCardIndex === questionIds.length - 1}
+            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next Card
+          </button>
+        </div>
+
+        <p className="text-center mt-8 text-xl text-gray-700">
+          Card {currentCardIndex + 1} of {questionIds.length}
+        </p>
+      </div>
+
       <style jsx>{`
         .flip-card {
           perspective: 1000px;
@@ -156,50 +231,6 @@ export default function FlashCardsPage() {
           transform: rotateY(180deg);
         }
       `}</style>
-
-      <h1 className="text-4xl font-bold mb-8 text-center text-blue-600">
-        Drone Pilot Flash Cards
-      </h1>
-      <p className="text-center mb-4">Welcome, {user.username}!</p>
-
-      <div
-        className={`flip-card w-full h-64 ${isFlipped ? "flipped" : ""}`}
-        onClick={handleCardClick}
-      >
-        <div className="flip-card-inner relative w-full h-full">
-          <div className="flip-card-front absolute w-full h-full bg-white border-2 border-gray-300 rounded-lg shadow-lg p-6 flex flex-col items-center justify-center">
-            <p className="text-2xl text-center">{currentCard.questionText}</p>
-          </div>
-          <div className="flip-card-back absolute w-full h-full bg-blue-100 border-2 border-blue-300 rounded-lg shadow-lg p-6 flex flex-col items-center justify-center">
-            {renderCardBack(currentCard).map((answer, index) => (
-              <p key={index} className="text-xl text-center mb-2">
-                {answer}
-              </p>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex justify-between mt-8">
-        <button
-          onClick={handlePreviousCard}
-          disabled={currentCardIndex === 0}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
-        >
-          Previous Card
-        </button>
-        <button
-          onClick={handleNextCard}
-          disabled={currentCardIndex === questionIds.length - 1}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
-        >
-          Next Card
-        </button>
-      </div>
-
-      <p className="text-center mt-4">
-        Card {currentCardIndex + 1} of {questionIds.length}
-      </p>
     </div>
   );
 }

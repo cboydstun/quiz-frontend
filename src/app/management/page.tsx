@@ -158,14 +158,23 @@ const MainContent: React.FC<MainContentProps> = ({
 }) => {
   switch (activeTab) {
     case "users":
-      if (usersLoading) return <div>Loading users...</div>;
+      if (usersLoading)
+        return (
+          <div className="flex justify-center items-center h-full">
+            <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        );
       if (usersError)
-        return <div>Error loading users: {usersError.message}</div>;
+        return (
+          <div className="text-red-500 text-center">
+            Error loading users: {usersError.message}
+          </div>
+        );
       return <UserManagement user={user} usersData={usersData} {...props} />;
     case "questions":
       return <QuestionManagement user={user} {...props} />;
     default:
-      return <div>Select a tab</div>;
+      return <div className="text-center text-gray-600">Select a tab</div>;
   }
 };
 
@@ -372,29 +381,39 @@ const ManagementPage: React.FC = () => {
     }
   };
 
-  if (authLoading) return <p>Loading...</p>;
+  if (authLoading)
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
   if (!user) return null;
 
   return (
-    <div className="flex">
+    <div className="flex min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} user={user} />
-      <main className="ml-64 p-8 flex-grow">
-        <MainContent
-          activeTab={activeTab}
-          user={user}
-          usersData={usersData}
-          usersLoading={usersLoading}
-          usersError={usersError}
-          questionsData={questionsData}
-          handleChangeUserRole={handleChangeUserRole}
-          handleDeleteUser={handleDeleteUser}
-          handleCreateQuestion={handleCreateQuestion}
-          handleUpdateQuestion={handleUpdateQuestion}
-          handleDeleteQuestion={handleDeleteQuestion}
-          editingQuestion={editingQuestion}
-          setEditingQuestion={setEditingQuestion}
-          handleRegisterUser={handleRegisterUser}
-        />
+      <main className="flex-grow p-8">
+        <h1 className="text-3xl font-bold mb-6 text-blue-600">
+          Management Dashboard
+        </h1>
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <MainContent
+            activeTab={activeTab}
+            user={user}
+            usersData={usersData}
+            usersLoading={usersLoading}
+            usersError={usersError}
+            questionsData={questionsData}
+            handleChangeUserRole={handleChangeUserRole}
+            handleDeleteUser={handleDeleteUser}
+            handleCreateQuestion={handleCreateQuestion}
+            handleUpdateQuestion={handleUpdateQuestion}
+            handleDeleteQuestion={handleDeleteQuestion}
+            editingQuestion={editingQuestion}
+            setEditingQuestion={setEditingQuestion}
+            handleRegisterUser={handleRegisterUser}
+          />
+        </div>
       </main>
     </div>
   );
