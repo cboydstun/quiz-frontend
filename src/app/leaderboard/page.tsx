@@ -55,7 +55,7 @@ export default function LeaderboardPage() {
   const { leaderboard, currentUserEntry } = data.getLeaderboard;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100 py-12">
+    <div className="min-h-screen py-12">
       <div className="container mx-auto px-4 max-w-4xl">
         <h1 className="text-4xl font-bold mb-8 text-center text-blue-600">
           Leaderboard

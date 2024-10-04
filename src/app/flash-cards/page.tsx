@@ -156,7 +156,7 @@ export default function FlashCardsPage() {
     );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100 py-12">
+    <div className="min-h-screen py-6">
       <div className="container mx-auto p-4 max-w-2xl">
         <h1 className="text-4xl font-bold mb-8 text-center text-blue-600">
           Drone Pilot Flash Cards
