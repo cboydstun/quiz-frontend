@@ -118,10 +118,6 @@ export default function Home() {
             </Link>
           </div>
         </section>
-
-        <footer className="text-center text-gray-600">
-          <p>© 2023 Drone License Quiz App. All rights reserved.</p>
-        </footer>
       </div>
     </div>
   );
