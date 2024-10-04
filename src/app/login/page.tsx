@@ -72,6 +72,13 @@ export default function LoginPage() {
     [router, setError]
   );
 
+  const handleAuthenticationSuccess = (authData: {
+    token: string;
+    user: { role: string };
+  }) => {
+    redirectBasedOnRole(authData.user.role);
+  };
+
   const handleGoogleAuthentication = useCallback(
     async (code: string) => {
       try {
@@ -86,7 +93,7 @@ export default function LoginPage() {
         setError(errorMessage);
       }
     },
-    [authenticateWithGoogle, authLogin, setError]
+    [authenticateWithGoogle, authLogin, setError, handleAuthenticationSuccess]
   );
 
   useEffect(() => {
@@ -140,13 +147,6 @@ export default function LoginPage() {
       setError("Failed to initiate Google Sign-In. Please try again.");
       console.error(err);
     }
-  };
-
-  const handleAuthenticationSuccess = (authData: {
-    token: string;
-    user: { role: string };
-  }) => {
-    redirectBasedOnRole(authData.user.role);
   };
 
   if (authLoading) {

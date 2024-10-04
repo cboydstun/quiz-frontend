@@ -48,7 +48,6 @@ const QuestionManagement: React.FC<QuestionManagementProps> = ({
   handleDeleteQuestion,
   editingQuestion,
   setEditingQuestion,
-  user, // Not used directly, but kept for future use or consistency
 }) => {
   const [sortField, setSortField] = useState<SortField>("prompt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");

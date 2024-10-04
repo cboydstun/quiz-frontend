@@ -46,12 +46,19 @@ interface Question {
   points: number;
 }
 
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  role: string;
+}
+
 type Difficulty = "EASY" | "MEDIUM" | "HARD";
 type QuestionCount = 10 | 20 | 50 | 100 | 200 | "infinite";
 
 export default function QuizPage() {
   const router = useRouter();
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [questionCount, setQuestionCount] = useState<QuestionCount>(10);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -85,12 +92,27 @@ export default function QuizPage() {
       if (!userData?.me) {
         router.push("/login");
       } else {
-        setCurrentUser(userData.me);
+        setCurrentUser(userData.me as User);
       }
     }
   }, [userData, userLoading, router]);
 
   console.log("currentUser", currentUser);
+
+  const handleNextQuestion = () => {
+    const currentQuestionId = questions[currentQuestionIndex].id;
+    if (userAnswers[currentQuestionId]) {
+      if (currentQuestionIndex < questions.length - 1) {
+        setCurrentQuestionIndex((prev) => prev + 1);
+        setShowHint(false);
+        resetTimer();
+      } else {
+        handleSubmitQuiz();
+      }
+    } else {
+      alert("Please select an answer before moving to the next question.");
+    }
+  };
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -109,7 +131,7 @@ export default function QuizPage() {
       }, 1000);
     }
     return () => clearInterval(timer);
-  }, [difficulty, currentQuestionIndex]);
+  }, [difficulty, currentQuestionIndex, handleNextQuestion]);
 
   if (userLoading || questionsLoading)
     return (
@@ -185,21 +207,6 @@ export default function QuizPage() {
       setTimeRemaining(60);
     } else if (difficulty === "HARD") {
       setTimeRemaining(30);
-    }
-  };
-
-  const handleNextQuestion = () => {
-    const currentQuestionId = questions[currentQuestionIndex].id;
-    if (userAnswers[currentQuestionId]) {
-      if (currentQuestionIndex < questions.length - 1) {
-        setCurrentQuestionIndex((prev) => prev + 1);
-        setShowHint(false);
-        resetTimer();
-      } else {
-        handleSubmitQuiz();
-      }
-    } else {
-      alert("Please select an answer before moving to the next question.");
     }
   };
 

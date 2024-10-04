@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { useQuery, useMutation, gql } from "@apollo/client";
-import { useAuth } from "../../contexts/AuthContext";
 
 const GET_USER_PROFILE = gql`
   query GetUserProfile {
