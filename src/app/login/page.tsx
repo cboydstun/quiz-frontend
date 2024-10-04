@@ -1,11 +1,10 @@
-// src/app/login/page.tsx
-
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { gql, useMutation, useLazyQuery } from "@apollo/client";
+import Image from "next/image";
+import { gql, useMutation, useLazyQuery, ApolloError } from "@apollo/client";
 import { useAuth } from "../../contexts/AuthContext";
 
 const LOGIN_MUTATION = gql`
@@ -55,11 +54,46 @@ export default function LoginPage() {
   const [getGoogleAuthUrl] = useLazyQuery(GET_GOOGLE_AUTH_URL);
   const [authenticateWithGoogle] = useMutation(AUTHENTICATE_WITH_GOOGLE);
 
+  const redirectBasedOnRole = useCallback(
+    (role: string) => {
+      switch (role) {
+        case "SUPER_ADMIN":
+        case "ADMIN":
+        case "EDITOR":
+          router.push("/management");
+          break;
+        case "USER":
+          router.push("/quiz");
+          break;
+        default:
+          setError("Invalid user role");
+      }
+    },
+    [router, setError]
+  );
+
+  const handleGoogleAuthentication = useCallback(
+    async (code: string) => {
+      try {
+        const { data } = await authenticateWithGoogle({ variables: { code } });
+        await authLogin(data.authenticateWithGoogle.token);
+        handleAuthenticationSuccess(data.authenticateWithGoogle);
+      } catch (err: unknown) {
+        let errorMessage = "Google authentication failed. Please try again.";
+        if (err instanceof ApolloError && err.graphQLErrors.length > 0) {
+          errorMessage = err.graphQLErrors[0].message;
+        }
+        setError(errorMessage);
+      }
+    },
+    [authenticateWithGoogle, authLogin, setError]
+  );
+
   useEffect(() => {
     if (!authLoading && user) {
       redirectBasedOnRole(user.role);
     }
-  }, [authLoading, user]);
+  }, [authLoading, user, redirectBasedOnRole]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -67,7 +101,7 @@ export default function LoginPage() {
     if (code) {
       handleGoogleAuthentication(code);
     }
-  }, []);
+  }, [handleGoogleAuthentication]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,11 +120,13 @@ export default function LoginPage() {
       } else {
         setError("Login failed. Please check your credentials and try again.");
       }
-    } catch (err: any) {
-      if (err.graphQLErrors && err.graphQLErrors.length > 0) {
+    } catch (err: unknown) {
+      if (err instanceof ApolloError && err.graphQLErrors.length > 0) {
         setError(err.graphQLErrors[0].message);
-      } else {
+      } else if (err instanceof Error) {
         setError(err.message || "An error occurred. Please try again.");
+      } else {
+        setError("An unknown error occurred. Please try again.");
       }
       console.error(err);
     }
@@ -100,23 +136,9 @@ export default function LoginPage() {
     try {
       const { data } = await getGoogleAuthUrl();
       window.location.href = data.getGoogleAuthUrl.url;
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError("Failed to initiate Google Sign-In. Please try again.");
       console.error(err);
-    }
-  };
-
-  const handleGoogleAuthentication = async (code: string) => {
-    try {
-      const { data } = await authenticateWithGoogle({ variables: { code } });
-      await authLogin(data.authenticateWithGoogle.token);
-      handleAuthenticationSuccess(data.authenticateWithGoogle);
-    } catch (err: any) {
-      let errorMessage = "Google authentication failed. Please try again.";
-      if (err.graphQLErrors && err.graphQLErrors.length > 0) {
-        errorMessage = err.graphQLErrors[0].message;
-      }
-      setError(errorMessage);
     }
   };
 
@@ -125,21 +147,6 @@ export default function LoginPage() {
     user: { role: string };
   }) => {
     redirectBasedOnRole(authData.user.role);
-  };
-
-  const redirectBasedOnRole = (role: string) => {
-    switch (role) {
-      case "SUPER_ADMIN":
-      case "ADMIN":
-      case "EDITOR":
-        router.push("/management");
-        break;
-      case "USER":
-        router.push("/quiz");
-        break;
-      default:
-        setError("Invalid user role");
-    }
   };
 
   if (authLoading) {
@@ -267,10 +274,12 @@ export default function LoginPage() {
               onClick={handleGoogleSignIn}
               className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-300"
             >
-              <img
-                className="h-5 w-5 mr-2"
+              <Image
                 src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
                 alt="Google logo"
+                width={20}
+                height={20}
+                className="mr-2"
               />
               Sign in with Google
             </button>

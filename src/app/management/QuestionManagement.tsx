@@ -48,7 +48,7 @@ const QuestionManagement: React.FC<QuestionManagementProps> = ({
   handleDeleteQuestion,
   editingQuestion,
   setEditingQuestion,
-  user,
+  user, // Not used directly, but kept for future use or consistency
 }) => {
   const [sortField, setSortField] = useState<SortField>("prompt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
@@ -82,8 +82,8 @@ const QuestionManagement: React.FC<QuestionManagementProps> = ({
     });
 
     return filtered.sort((a, b) => {
-      let aValue: any = a[sortField];
-      let bValue: any = b[sortField];
+      let aValue: string | number = a[sortField] as string | number;
+      let bValue: string | number = b[sortField] as string | number;
 
       if (sortField === "answers") {
         aValue = a.answers.join(", ");
@@ -91,6 +91,12 @@ const QuestionManagement: React.FC<QuestionManagementProps> = ({
       } else if (sortField === "createdBy") {
         aValue = a.createdBy?.username ?? "";
         bValue = b.createdBy?.username ?? "";
+      }
+
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        return sortDirection === "asc"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
       }
 
       if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;

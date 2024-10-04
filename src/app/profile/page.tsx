@@ -50,7 +50,6 @@ const UPDATE_PASSWORD = gql`
 `;
 
 export default function ProfilePage() {
-  const { user } = useAuth();
   const [username, setUsername] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -96,7 +95,7 @@ export default function ProfilePage() {
           }
         },
       });
-      setMessage("Username updated successfully");
+      setMessage("Username updated successfully: " + result);
       setUsername("");
       refetch();
     } catch (err) {

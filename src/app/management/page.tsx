@@ -194,14 +194,12 @@ const ManagementPage: React.FC = () => {
     fetchPolicy: "network-only",
   });
 
-  const {
-    loading: questionsLoading,
-    error: questionsError,
-    data: questionsData,
-    refetch: refetchQuestions,
-  } = useQuery(GET_ALL_QUESTIONS, {
-    fetchPolicy: "network-only",
-  });
+  const { data: questionsData, refetch: refetchQuestions } = useQuery(
+    GET_ALL_QUESTIONS,
+    {
+      fetchPolicy: "network-only",
+    }
+  );
 
   const [createQuestion] = useMutation(CREATE_QUESTION);
   const [updateQuestion] = useMutation(UPDATE_QUESTION);

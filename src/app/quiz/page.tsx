@@ -65,11 +65,7 @@ export default function QuizPage() {
   const [showHint, setShowHint] = useState(false);
   const [showQuitConfirmation, setShowQuitConfirmation] = useState(false);
 
-  const {
-    loading: userLoading,
-    error: userError,
-    data: userData,
-  } = useQuery(GET_CURRENT_USER, {
+  const { loading: userLoading, data: userData } = useQuery(GET_CURRENT_USER, {
     onError: (error) => {
       if (error.message.includes("Authorization header must be provided")) {
         router.push("/login");
@@ -93,6 +89,8 @@ export default function QuizPage() {
       }
     }
   }, [userData, userLoading, router]);
+
+  console.log("currentUser", currentUser);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
