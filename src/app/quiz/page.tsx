@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { gql, useQuery, useMutation } from "@apollo/client";
 
@@ -97,9 +97,13 @@ export default function QuizPage() {
     }
   }, [userData, userLoading, router]);
 
-  console.log("currentUser", currentUser);
-
-  const questions: Question[] = questionsData?.questions || [];
+  const allQuestions: Question[] = questionsData?.questions || [];
+  const questions = useMemo(() => {
+    if (questionCount === "infinite") {
+      return allQuestions;
+    }
+    return allQuestions.slice(0, questionCount);
+  }, [allQuestions, questionCount]);
 
   const resetTimer = useCallback(() => {
     if (difficulty === "MEDIUM") {
@@ -216,6 +220,8 @@ export default function QuizPage() {
       setCurrentQuestionIndex((prev) => prev + 1);
       setShowHint(false);
       resetTimer();
+    } else {
+      handleSubmitQuiz();
     }
   };
 
@@ -398,8 +404,7 @@ export default function QuizPage() {
           )}
           <div className="mb-8">
             <p className="font-semibold text-lg mb-2">
-              Question {currentQuestionIndex + 1} of{" "}
-              {questionCount === "infinite" ? "∞" : questionCount}
+              Question {currentQuestionIndex + 1} of {questions.length}
             </p>
             <p className="text-sm text-gray-600 mb-4">
               This question is worth {currentQuestion.points} points
@@ -456,12 +461,14 @@ export default function QuizPage() {
             >
               Previous
             </button>
-            <button
-              onClick={handleSkipQuestion}
-              className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-full transition-all duration-300 transform hover:scale-105"
-            >
-              Skip
-            </button>
+            {!isLastQuestion && (
+              <button
+                onClick={handleSkipQuestion}
+                className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-full transition-all duration-300 transform hover:scale-105"
+              >
+                Skip
+              </button>
+            )}
             <button
               onClick={handleNextQuestion}
               disabled={!isAnswered}
