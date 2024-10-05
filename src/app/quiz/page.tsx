@@ -46,13 +46,6 @@ interface Question {
   points: number;
 }
 
-interface User {
-  id: string;
-  username: string;
-  email: string;
-  role: string;
-}
-
 type Difficulty = "EASY" | "MEDIUM" | "HARD";
 type QuestionCount = 10 | 20 | 50 | 100 | 200 | "infinite";
 
