@@ -58,7 +58,6 @@ type QuestionCount = 10 | 20 | 50 | 100 | 200 | "infinite";
 
 export default function QuizPage() {
   const router = useRouter();
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [questionCount, setQuestionCount] = useState<QuestionCount>(10);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -91,8 +90,6 @@ export default function QuizPage() {
     if (!userLoading) {
       if (!userData?.me) {
         router.push("/login");
-      } else {
-        setCurrentUser(userData.me as User);
       }
     }
   }, [userData, userLoading, router]);
