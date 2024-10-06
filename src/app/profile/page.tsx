@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, gql } from "@apollo/client";
 
 const GET_USER_PROFILE = gql`
@@ -48,6 +48,16 @@ const UPDATE_PASSWORD = gql`
   }
 `;
 
+const UPDATE_LOGIN_STREAK = gql`
+  mutation UpdateLoginStreak($userId: ID!) {
+    updateLoginStreak(userId: $userId) {
+      id
+      consecutiveLoginDays
+      lastLoginDate
+    }
+  }
+`;
+
 export default function ProfilePage() {
   const [username, setUsername] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
@@ -58,6 +68,26 @@ export default function ProfilePage() {
   const { loading, error, data, refetch } = useQuery(GET_USER_PROFILE);
   const [updateUsername] = useMutation(UPDATE_USERNAME);
   const [updatePassword] = useMutation(UPDATE_PASSWORD);
+  const [updateLoginStreak] = useMutation(UPDATE_LOGIN_STREAK);
+
+  useEffect(() => {
+    if (data?.me?.id) {
+      updateLoginStreak({
+        variables: { userId: data.me.id },
+        update: (cache, { data: updatedData }) => {
+          if (updatedData?.updateLoginStreak) {
+            cache.modify({
+              fields: {
+                me(existingMe = {}) {
+                  return { ...existingMe, ...updatedData.updateLoginStreak };
+                },
+              },
+            });
+          }
+        },
+      });
+    }
+  }, [data?.me?.id, updateLoginStreak]);
 
   if (loading)
     return (
@@ -120,6 +150,30 @@ export default function ProfilePage() {
       setMessage("Failed to update password");
     }
   };
+
+  const formatDate = (
+    timestamp: string | number | null | undefined
+  ): string => {
+    if (!timestamp) return "N/A";
+    const date = new Date(
+      typeof timestamp === "string" ? parseInt(timestamp, 10) : timestamp
+    );
+
+    if (isNaN(date.getTime())) {
+      return "Invalid Date";
+    }
+
+    return date.toLocaleString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  console.log("// profile page lastLoginDate", data.me.lastLoginDate);
 
   return (
     <div className="min-h-screen py-12">
@@ -279,7 +333,7 @@ export default function ProfilePage() {
                       Login Streak
                     </h3>
                     <p className="text-3xl font-bold text-indigo-700">
-                      {data.me.consecutiveLoginDays} days
+                      {data?.me?.consecutiveLoginDays || 0} days
                     </p>
                   </div>
                   <div className="bg-pink-100 p-4 rounded-lg">
@@ -287,7 +341,7 @@ export default function ProfilePage() {
                       Last Login
                     </h3>
                     <p className="text-sm text-pink-700">
-                      {new Date(data.me.lastLoginDate).toLocaleString()}
+                      {formatDate(data?.me?.lastLoginDate)}
                     </p>
                   </div>
                 </div>
