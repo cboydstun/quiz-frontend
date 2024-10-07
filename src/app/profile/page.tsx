@@ -190,8 +190,6 @@ export default function ProfilePage() {
     );
   };
 
-  console.log("// profile page questionsAnswered", data?.me?.questionsAnswered);
-
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {(error as ApolloError).message}</div>;
 
