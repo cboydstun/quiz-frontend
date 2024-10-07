@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useQuery, useMutation, gql } from "@apollo/client";
+import { useQuery, useMutation, gql, ApolloError } from "@apollo/client";
 
 const GET_USER_PROFILE = gql`
   query GetUserProfile {
@@ -173,7 +173,27 @@ export default function ProfilePage() {
     });
   };
 
-  console.log("// profile page lastLoginDate", data.me.lastLoginDate);
+  const renderQuestionsAnswered = () => {
+    if (loading) {
+      return <p className="text-3xl font-bold text-green-700">Loading...</p>;
+    }
+    if (error) {
+      return <p className="text-xl text-red-500">Error loading data</p>;
+    }
+    if (data?.me?.questionsAnswered === undefined) {
+      return <p className="text-xl text-yellow-500">Data not available</p>;
+    }
+    return (
+      <p className="text-3xl font-bold text-green-700">
+        {data.me.questionsAnswered}
+      </p>
+    );
+  };
+
+  console.log("// profile page questionsAnswered", data?.me?.questionsAnswered);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {(error as ApolloError).message}</div>;
 
   return (
     <div className="min-h-screen py-12">
@@ -298,9 +318,7 @@ export default function ProfilePage() {
                     <h3 className="text-lg font-semibold mb-2 text-green-600">
                       Questions Answered
                     </h3>
-                    <p className="text-3xl font-bold text-green-700">
-                      {data.me.questionsAnswered}
-                    </p>
+                    {renderQuestionsAnswered()}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -323,7 +341,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="bg-yellow-100 p-4 rounded-lg">
                   <h3 className="text-lg font-semibold mb-2 text-yellow-600">
-                    Skills
+                    Badges
                   </h3>
                   <p className="text-gray-700">{data.me.skills.join(", ")}</p>
                 </div>
