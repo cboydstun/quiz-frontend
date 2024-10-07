@@ -14,7 +14,7 @@ import { ReactNode, useMemo } from "react";
 import { AuthProvider } from "../contexts/AuthContext";
 
 const httpLink = createHttpLink({
-  uri: "http://localhost:4000/v1/graphql",
+  uri: process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/v1/graphql",
 });
 
 const authLink = setContext((_, { headers }) => {
