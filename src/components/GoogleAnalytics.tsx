@@ -2,14 +2,18 @@
 
 'use client';
 
-import { useEffect } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
-
 declare global {
   interface Window {
-    gtag: (command: string, id: string, config: Record<string, any>) => void;
+    gtag: (
+      command: 'config' | 'event',
+      id: string,
+      params?: Record<string, unknown>
+    ) => void;
   }
 }
+
+import { useEffect } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
 
 export default function Analytics() {
   const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
