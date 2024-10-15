@@ -1,3 +1,5 @@
+"use client";
+
 import { ApolloWrapper } from "../components/ApolloWrapper";
 import { Analytics } from "@vercel/analytics/react";
 import Navbar from "../components/Navbar";
