@@ -15,7 +15,7 @@ declare global {
 import { useEffect } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
-export default function Analytics() {
+export default function GoogleAnalytics() {
   const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   const pathname = usePathname();
   const searchParams = useSearchParams();
