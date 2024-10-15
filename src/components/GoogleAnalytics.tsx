@@ -1,4 +1,4 @@
-// src/components/Analytics.tsx
+// src/components/GoogleAnalytics.tsx
 
 'use client';
 
@@ -13,22 +13,20 @@ declare global {
 }
 
 import { useEffect } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 export default function GoogleAnalytics() {
   const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
     if (GA_MEASUREMENT_ID) {
-      const url =
-        pathname + (searchParams.toString() ? '?' + searchParams.toString() : '');
+      const url = pathname + window.location.search;
       window.gtag('config', GA_MEASUREMENT_ID, {
         page_path: url,
       });
     }
-  }, [GA_MEASUREMENT_ID, pathname, searchParams]);
+  }, [GA_MEASUREMENT_ID, pathname]);
 
   return null;
 }
